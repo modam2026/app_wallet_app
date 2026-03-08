@@ -20,6 +20,8 @@ import 'constants.dart';
 
 /// This example demonstrates fluid ads.
 class FluidExample extends StatefulWidget {
+  const FluidExample({Key? key}) : super(key: key);
+
   @override
   _FluidExampleExampleState createState() => _FluidExampleExampleState();
 }
@@ -31,7 +33,7 @@ class _FluidExampleExampleState extends State<FluidExample> {
   @override
   Widget build(BuildContext context) => Scaffold(
       appBar: AppBar(
-        title: Text('Fluid example'),
+        title: const Text('Fluid example'),
       ),
       body: Center(
         child: Padding(
@@ -67,9 +69,9 @@ class _FluidExampleExampleState extends State<FluidExample> {
                         _width = newWidth;
                       });
                     },
-                    child: Text('Change size'));
+                    child: const Text('Change size'));
               }
-              return Text(
+              return const Text(
                 Constants.placeholderText,
                 style: TextStyle(fontSize: 24),
               );
@@ -84,7 +86,7 @@ class _FluidExampleExampleState extends State<FluidExample> {
     // Create the ad objects and load ads.
     _fluidAd = FluidAdManagerBannerAd(
       adUnitId: '/6499/example/APIDemo/Fluid',
-      request: AdManagerAdRequest(nonPersonalizedAds: true),
+      request: const AdManagerAdRequest(nonPersonalizedAds: true),
       listener: AdManagerBannerAdListener(
         onAdLoaded: (Ad ad) {
           print('$_fluidAd loaded.');

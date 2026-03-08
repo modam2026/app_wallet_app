@@ -37,12 +37,14 @@ const String testDevice = 'YOUR_DEVICE_ID';
 const int maxFailedLoadAttempts = 3;
 
 class MyApp extends StatefulWidget {
+  const MyApp({Key? key}) : super(key: key);
+
   @override
   _MyAppState createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> {
-  static final AdRequest request = AdRequest(
+  static const AdRequest request = AdRequest(
     keywords: <String>['foo', 'bar'],
     contentUrl: 'http://foo.com/bar.html',
     nonPersonalizedAds: true,
@@ -284,31 +286,31 @@ class _MyAppState extends State<MyApp> {
                   }
                 },
                 itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                  PopupMenuItem<String>(
+                  const PopupMenuItem<String>(
                     value: interstitialButtonText,
                     child: Text(interstitialButtonText),
                   ),
-                  PopupMenuItem<String>(
+                  const PopupMenuItem<String>(
                     value: rewardedButtonText,
                     child: Text(rewardedButtonText),
                   ),
-                  PopupMenuItem<String>(
+                  const PopupMenuItem<String>(
                     value: rewardedInterstitialButtonText,
                     child: Text(rewardedInterstitialButtonText),
                   ),
-                  PopupMenuItem<String>(
+                  const PopupMenuItem<String>(
                     value: fluidButtonText,
                     child: Text(fluidButtonText),
                   ),
-                  PopupMenuItem<String>(
+                  const PopupMenuItem<String>(
                     value: inlineAdaptiveButtonText,
                     child: Text(inlineAdaptiveButtonText),
                   ),
-                  PopupMenuItem<String>(
+                  const PopupMenuItem<String>(
                     value: anchoredAdaptiveButtonText,
                     child: Text(anchoredAdaptiveButtonText),
                   ),
-                  PopupMenuItem<String>(
+                  const PopupMenuItem<String>(
                     value: nativeTemplateButtonText,
                     child: Text(nativeTemplateButtonText),
                   ),

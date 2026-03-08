@@ -23,6 +23,8 @@ import 'constants.dart';
 /// Loads and shows an inline adaptive banner ad in a scrolling view,
 /// and reloads the ad when the orientation changes.
 class InlineAdaptiveExample extends StatefulWidget {
+  const InlineAdaptiveExample({Key? key}) : super(key: key);
+
   @override
   _InlineAdaptiveExampleState createState() => _InlineAdaptiveExampleState();
 }
@@ -57,7 +59,7 @@ class _InlineAdaptiveExampleState extends State<InlineAdaptiveExample> {
     _inlineAdaptiveAd = AdManagerBannerAd(
       adUnitId: 'ca-app-pub-3940256099942544/9214589741',
       sizes: [size],
-      request: AdManagerAdRequest(),
+      request: const AdManagerAdRequest(),
       listener: AdManagerBannerAdListener(
         onAdLoaded: (Ad ad) async {
           print('Inline adaptive banner loaded: ${ad.responseInfo}');
@@ -99,7 +101,7 @@ class _InlineAdaptiveExampleState extends State<InlineAdaptiveExample> {
             _isLoaded &&
             _adSize != null) {
           return Align(
-              child: Container(
+              child: SizedBox(
             width: _adWidth,
             height: _adSize!.height.toDouble(),
             child: AdWidget(
@@ -120,7 +122,7 @@ class _InlineAdaptiveExampleState extends State<InlineAdaptiveExample> {
   @override
   Widget build(BuildContext context) => Scaffold(
       appBar: AppBar(
-        title: Text('Inline adaptive banner example'),
+        title: const Text('Inline adaptive banner example'),
       ),
       body: Center(
         child: Padding(
@@ -136,7 +138,7 @@ class _InlineAdaptiveExampleState extends State<InlineAdaptiveExample> {
               if (index == 1) {
                 return _getAdWidget();
               }
-              return Text(
+              return const Text(
                 Constants.placeholderText,
                 style: TextStyle(fontSize: 24),
               );

@@ -17,7 +17,7 @@ class DataSearch extends SearchDelegate<CachedApplication?> {
         onPressed: () {
           query = '';
         },
-      )
+      ),
     ];
   }
 
@@ -45,22 +45,25 @@ class DataSearch extends SearchDelegate<CachedApplication?> {
     final suggestionList = query.isEmpty
         ? pApps
         : pApps
-            .where((app) =>
-                app.appName.toLowerCase().contains(query.toLowerCase()))
-            .toList();
+              .where(
+                (app) =>
+                    app.appName.toLowerCase().contains(query.toLowerCase()),
+              )
+              .toList();
 
     // Here we get the height of the screen using MediaQuery
     double screenHeight = MediaQuery.of(context).size.height;
 
-    return Container(
+    return SizedBox(
       height:
           screenHeight * 1.0, // Assigning 60% of the height to the Container
       child: ListView.builder(
         itemBuilder: (context, index) => ListTile(
           leading: Image(
-              image: MemoryImage(base64Decode(suggestionList[index].icon)),
-              width: 50,
-              height: 50),
+            image: MemoryImage(base64Decode(suggestionList[index].icon)),
+            width: 50,
+            height: 50,
+          ),
           title: Text(suggestionList[index].appName),
           //subtitle: Text(suggestionList[index].packageName),
           onTap: () {

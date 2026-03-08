@@ -66,17 +66,20 @@ class AppCache {
         List<dynamic> cachedAppJsonList = jsonDecode(cachedAppsData);
         return cachedAppJsonList
             .map<CachedApplication>(
-                (appJson) => CachedApplication.fromJson(appJson))
+              (appJson) => CachedApplication.fromJson(appJson),
+            )
             .toList();
       } else if (cachedAppsData is List<String>) {
         return cachedAppsData
-            .map<CachedApplication>((appString) =>
-                CachedApplication.fromJson(jsonDecode(appString)))
+            .map<CachedApplication>(
+              (appString) => CachedApplication.fromJson(jsonDecode(appString)),
+            )
             .toList();
       } else if (cachedAppsData is List) {
         return cachedAppsData
             .map<CachedApplication>(
-                (appJson) => CachedApplication.fromJson(jsonDecode(appJson)))
+              (appJson) => CachedApplication.fromJson(jsonDecode(appJson)),
+            )
             .toList();
       } else {
         // Print or log the type of cachedAppsData
@@ -94,8 +97,9 @@ class AppCache {
 
   static Future<void> cacheApps(List<CachedApplication> apps) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    List<String> appStrings =
-        apps.map((app) => jsonEncode(app.toJson())).toList();
+    List<String> appStrings = apps
+        .map((app) => jsonEncode(app.toJson()))
+        .toList();
     await prefs.setStringList(keyCachedApps, appStrings);
   }
 
@@ -111,8 +115,8 @@ class AppCache {
       String icon = '';
       try {
         var appWithIcon = app as ApplicationWithIcon;
-        final iconBytes = await appWithIcon.icon;
-        icon = base64Encode(iconBytes!);
+        final iconBytes = appWithIcon.icon;
+        icon = base64Encode(iconBytes);
       } catch (e) {
         print('Error encoding icon: $e');
       }
@@ -151,16 +155,17 @@ class AppCache {
 
   static Future<void> updateCachedAppList(List<Application> apps) async {
     List<CachedApplication> cachedApps = await getCachedApps();
-    List<String> cachedAppPackageNames =
-        cachedApps.map((app) => app.packageName).toList();
+    List<String> cachedAppPackageNames = cachedApps
+        .map((app) => app.packageName)
+        .toList();
 
     for (var app in apps) {
       if (!cachedAppPackageNames.contains(app.packageName)) {
         String icon = '';
         try {
           var appWithIcon = app as ApplicationWithIcon;
-          final iconBytes = await appWithIcon.icon;
-          icon = base64Encode(iconBytes!);
+          final iconBytes = appWithIcon.icon;
+          icon = base64Encode(iconBytes);
         } catch (e) {
           print('Error encoding icon: $e');
         }

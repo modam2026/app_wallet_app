@@ -33,7 +33,7 @@ class SQLHelper {
   // 2023.06.03
   // ******************* //
 
-// created_at: 2023.06.03
+  // created_at: 2023.06.03
   static Future<sql.Database> appMngmntDB() async {
     return sql.openDatabase(
       'db_app_management.db',
@@ -58,8 +58,10 @@ class SQLHelper {
   }
 
   static Future<Map<String, dynamic>> makeIntrnAppListData(
-      String pAppName, String pPackageName) async {
-    Map<String, dynamic> _item = Map();
+    String pAppName,
+    String pPackageName,
+  ) async {
+    Map<String, dynamic> item = {};
 
     String strAppOrder = "";
     String strAppKind = "";
@@ -76,10 +78,10 @@ class SQLHelper {
     var arrPackageParts = strPackageName.split(".");
 
     if (strPackageName == "com.modamtech.app_wallet_app") {
-      return _item;
+      return item;
     }
     try {
-      if (arrPackageParts.length > 0) {
+      if (arrPackageParts.isNotEmpty) {
         strPackagePart1 = arrPackageParts[0].toLowerCase();
       }
       if (arrPackageParts.length > 1) {
@@ -96,7 +98,7 @@ class SQLHelper {
       }
     } catch (e) {
       print("ERROR");
-      return _item;
+      return item;
     }
     //COMPANY / INST
     if (strPackagePart1 == "com" && strPackagePart2 == "google") {
@@ -184,27 +186,30 @@ class SQLHelper {
       strAppUserGroup = "U90";
     }
 
-    _item["app_num"] = 0;
-    _item["app_order"] = strAppOrder;
-    _item["app_kind"] = strAppKind;
-    _item["app_user_group"] = strAppUserGroup;
-    _item["app_opening"] = 0;
-    _item["app_use_period"] = 0;
-    _item["is_fixed_app"] = 0;
-    _item["app_name"] = strAppName;
-    _item["package_name"] = strPackageName;
-    _item["package_part1"] = strPackagePart1;
-    _item["package_part2"] = strPackagePart2;
-    _item["package_part3"] = strPackagePart3;
-    _item["package_part4"] = strPackagePart4;
-    _item["package_part5"] = strPackagePart5;
+    item["app_num"] = 0;
+    item["app_order"] = strAppOrder;
+    item["app_kind"] = strAppKind;
+    item["app_user_group"] = strAppUserGroup;
+    item["app_opening"] = 0;
+    item["app_use_period"] = 0;
+    item["is_fixed_app"] = 0;
+    item["app_name"] = strAppName;
+    item["package_name"] = strPackageName;
+    item["package_part1"] = strPackagePart1;
+    item["package_part2"] = strPackagePart2;
+    item["package_part3"] = strPackagePart3;
+    item["package_part4"] = strPackagePart4;
+    item["package_part5"] = strPackagePart5;
 
-    return _item;
+    return item;
   }
 
   // DB 방식이 아닌 List 객체 방식으로 변경된 함수
   static Future<List<Map<String, dynamic>>> initIntrnAppListData(
-      String pKind, String pUserGroup, List<CachedApplication> pAllApps) async {
+    String pKind,
+    String pUserGroup,
+    List<CachedApplication> pAllApps,
+  ) async {
     List<Map<String, dynamic>> makeAppsFromList = [];
     Map<String, dynamic> appFromMap = {};
 
@@ -228,7 +233,9 @@ class SQLHelper {
   }
 
   static Future<int> deleteMyIntrnAppInfo(
-      String pAppName, String pPackageName) async {
+    String pAppName,
+    String pPackageName,
+  ) async {
     final db = await SQLHelper.appMngmntDB();
 
     // Update SQL query string
@@ -245,7 +252,9 @@ class SQLHelper {
   }
 
   static Future<int> fixMyIntrnAppInfo(
-      String pAppName, String pPackageName) async {
+    String pAppName,
+    String pPackageName,
+  ) async {
     final db = await SQLHelper.appMngmntDB();
 
     // Update SQL query string
@@ -262,8 +271,13 @@ class SQLHelper {
     return result;
   }
 
-  static Future<int> changeMyGroupInfo(String pAppName, String pPackageName,
-      String pAppOrder, String pAppKind, String pAppUserGroup) async {
+  static Future<int> changeMyGroupInfo(
+    String pAppName,
+    String pPackageName,
+    String pAppOrder,
+    String pAppKind,
+    String pAppUserGroup,
+  ) async {
     final db = await SQLHelper.appMngmntDB();
 
     // Update SQL query string
@@ -277,32 +291,39 @@ class SQLHelper {
     ''';
 
     // Execute the query and return the result
-    int result = await db.rawUpdate(
-        sql, [pAppOrder, pAppKind, pAppUserGroup, pAppName, pPackageName]);
+    int result = await db.rawUpdate(sql, [
+      pAppOrder,
+      pAppKind,
+      pAppUserGroup,
+      pAppName,
+      pPackageName,
+    ]);
 
     return result;
   }
 
   static Future<List<Map<String, dynamic>>> changeOpenStatusInfo(
-      String pAppName, String pPackageName) async {
+    String pAppName,
+    String pPackageName,
+  ) async {
     final db = await SQLHelper.appMngmntDB();
 
     List<Map<String, dynamic>> tmpMaxNum;
     List<Map<String, dynamic>> tmpAppUsePeriod;
 
-    String sql_max_num = '''
+    String sqlMaxNum = '''
             SELECT COALESCE(MAX(app_num), 0) as max_num
               FROM tbl_my_application_info
             ''';
     // Execute the query and return the result
-    tmpMaxNum = await db.rawQuery(sql_max_num);
+    tmpMaxNum = await db.rawQuery(sqlMaxNum);
 
     int maxNum = tmpMaxNum[0]["max_num"];
 
     maxNum = maxNum + 1;
 
     // Update SQL query string
-    String _sql_update = '''
+    String sql_update = '''
     UPDATE tbl_my_application_info
        SET app_num = ?,
            app_opening = ?,
@@ -312,41 +333,47 @@ class SQLHelper {
     ''';
 
     // Execute the query and return the result
-    int _result =
-        await db.rawUpdate(_sql_update, [maxNum, 1, pAppName, pPackageName]);
+    int result = await db.rawUpdate(sql_update, [
+      maxNum,
+      1,
+      pAppName,
+      pPackageName,
+    ]);
 
     // Update SQL query string
-    _sql_update = '''
+    sql_update = '''
     UPDATE tbl_my_application_info
        SET app_use_period = ROUND(julianday(date('now')) - julianday(strftime('%Y-%m-%d', use_period_at)))
     ''';
 
     // Execute the query and return the result
-    _result = await db.rawUpdate(_sql_update);
+    result = await db.rawUpdate(sql_update);
 
-    String sql_app_use_period = '''
+    String sqlAppUsePeriod = '''
             SELECT  app_num, app_name, package_name, app_use_period, is_fixed_app
               FROM tbl_my_application_info
             ''';
     // Execute the query and return the result
-    tmpAppUsePeriod = await db.rawQuery(sql_app_use_period);
+    tmpAppUsePeriod = await db.rawQuery(sqlAppUsePeriod);
 
     return tmpAppUsePeriod;
   }
 
   static Future<int> selectNumStatusInfo(
-      String pAppName, String pPackageName) async {
+    String pAppName,
+    String pPackageName,
+  ) async {
     final db = await SQLHelper.appMngmntDB();
 
     List<Map<String, dynamic>> tmpMaxNum;
 
     // COALESCE 은 결과가 null 일때 0 으로 변경하는 기능
-    String sql_max_num = '''
+    String sqlMaxNum = '''
             SELECT COALESCE(MAX(app_num), 0) as max_num 
               FROM tbl_my_application_info
             ''';
     // Execute the query and return the result
-    tmpMaxNum = await db.rawQuery(sql_max_num);
+    tmpMaxNum = await db.rawQuery(sqlMaxNum);
 
     int maxNum = tmpMaxNum[0]["max_num"];
 
@@ -399,7 +426,10 @@ class SQLHelper {
 
   // Create new sentence
   static Future<int> addMyIntrnAppInfo(
-      String pAppName, String pPackageName, String pType) async {
+    String pAppName,
+    String pPackageName,
+    String pType,
+  ) async {
     final appMngmntDB = await SQLHelper.appMngmntDB();
 
     int result = 0;
@@ -409,13 +439,13 @@ class SQLHelper {
     for (var _item in commonHelper.appDataWithAll) {
       if (_item["app_name"] == pAppName &&
           _item["package_name"] == pPackageName) {
-        String sql_exist = '''
+        String sqlExist = '''
             SELECT count(app_num) as exist_cnt
               FROM tbl_my_application_info
              WHERE package_name = ? 
             ''';
         // Execute the query and return the result
-        tmpMaxCnt = await appMngmntDB.rawQuery(sql_exist, [pPackageName]);
+        tmpMaxCnt = await appMngmntDB.rawQuery(sqlExist, [pPackageName]);
 
         int existCnt = tmpMaxCnt[0]["exist_cnt"];
 
@@ -464,7 +494,7 @@ class SQLHelper {
           _item["package_part2"],
           _item["package_part3"],
           _item["package_part4"],
-          _item["package_part5"]
+          _item["package_part5"],
         ]);
 
         break;
@@ -476,7 +506,9 @@ class SQLHelper {
 
   // Create new sentence
   static Future<bool> isAppInDatabase(
-      String pAppName, String pPackageName) async {
+    String pAppName,
+    String pPackageName,
+  ) async {
     final appMngmntDB = await SQLHelper.appMngmntDB();
 
     // Create SQL query string
@@ -489,8 +521,10 @@ class SQLHelper {
     ''';
 
     // Execute the query and return the result
-    List<Map<String, dynamic>> result =
-        await appMngmntDB.rawQuery(sql, [pAppName, pPackageName]);
+    List<Map<String, dynamic>> result = await appMngmntDB.rawQuery(sql, [
+      pAppName,
+      pPackageName,
+    ]);
 
     if (result.isEmpty) {
       return false;

@@ -40,19 +40,19 @@ class RequestConfiguration {
 /// Values for [RequestConfiguration.maxAdContentRating].
 class MaxAdContentRating {
   /// No specified content rating.
-  static final String unspecified = '';
+  static const String unspecified = '';
 
   /// Content suitable for general audiences, including families.
-  static final String g = 'G';
+  static const String g = 'G';
 
   /// Content suitable for most audiences with parental guidance.
-  static final String pg = 'PG';
+  static const String pg = 'PG';
 
   /// Content suitable for most audiences with parental guidance.
-  static final String t = 'T';
+  static const String t = 'T';
 
   /// Content suitable only for mature audiences.
-  static final String ma = 'MA';
+  static const String ma = 'MA';
 }
 
 /// Values for [RequestConfiguration.tagForUnderAgeOfConsent].
@@ -62,21 +62,21 @@ class TagForUnderAgeOfConsent {
   /// Indicates the publisher specified that the ad request should receive
   /// treatment for users in the European Economic Area (EEA) under the age
   /// of consent.
-  static final int yes = 1;
+  static const int yes = 1;
 
   /// Tag as NOT under age of consent.
   ///
   /// Indicates the publisher specified that the ad request should not receive
   /// treatment for users in the European Economic Area (EEA) under the age of
   /// consent.
-  static final int no = 0;
+  static const int no = 0;
 
   /// Do not specify tag for under age of consent.
   ///
   /// Indicates that the publisher has not specified whether the ad request
   /// should receive treatment for users in the European Economic Area (EEA)
   /// under the age of consent.
-  static final int unspecified = -1;
+  static const int unspecified = -1;
 }
 
 /// Values for [RequestConfiguration.tagForChildDirectedTreatment].
@@ -86,19 +86,19 @@ class TagForChildDirectedTreatment {
   /// Indicates the publisher specified that the ad request should receive
   /// treatment for users in the European Economic Area (EEA) under the age
   /// of consent.
-  static final int yes = 1;
+  static const int yes = 1;
 
   /// Tag for NOT child directed treatment.
   ///
   /// Indicates the publisher specified that the ad request should not receive
   /// treatment for users in the European Economic Area (EEA) under the age
   /// of consent.
-  static final int no = 0;
+  static const int no = 0;
 
   /// Do not specify tag for child directed treatment.
   ///
   /// Indicates that the publisher has not specified whether the ad request
   /// should receive treatment for users in the European Economic Area (EEA)
   /// under the age of consent.
-  static final int unspecified = -1;
+  static const int unspecified = -1;
 }

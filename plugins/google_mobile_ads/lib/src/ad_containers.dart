@@ -702,8 +702,8 @@ class _AdWidgetState extends State<AdWidget> {
               (BuildContext context, PlatformViewController controller) {
             return AndroidViewSurface(
               controller: controller as AndroidViewController,
-              gestureRecognizers: const <
-                  Factory<OneSequenceGestureRecognizer>>{},
+              gestureRecognizers: const <Factory<
+                  OneSequenceGestureRecognizer>>{},
               hitTestBehavior: PlatformViewHitTestBehavior.opaque,
             );
           },
@@ -713,7 +713,7 @@ class _AdWidgetState extends State<AdWidget> {
               viewType: '${instanceManager.channel.name}/ad_widget',
               layoutDirection: TextDirection.ltr,
               creationParams: instanceManager.adIdFor(widget.ad),
-              creationParamsCodec: StandardMessageCodec(),
+              creationParamsCodec: const StandardMessageCodec(),
             )
               ..addOnPlatformViewCreatedListener(params.onPlatformViewCreated)
               ..create();
@@ -739,7 +739,7 @@ class _AdWidgetState extends State<AdWidget> {
     return UiKitView(
       viewType: '${instanceManager.channel.name}/ad_widget',
       creationParams: instanceManager.adIdFor(widget.ad),
-      creationParamsCodec: StandardMessageCodec(),
+      creationParamsCodec: const StandardMessageCodec(),
     );
   }
 }
@@ -836,7 +836,7 @@ class _FluidAdWidgetState extends State<FluidAdWidget> {
             viewType: '${instanceManager.channel.name}/ad_widget',
             layoutDirection: TextDirection.ltr,
             creationParams: instanceManager.adIdFor(widget.ad),
-            creationParamsCodec: StandardMessageCodec(),
+            creationParamsCodec: const StandardMessageCodec(),
           )
             ..addOnPlatformViewCreatedListener(params.onPlatformViewCreated)
             ..create();
@@ -847,12 +847,12 @@ class _FluidAdWidgetState extends State<FluidAdWidget> {
       platformView = UiKitView(
         viewType: '${instanceManager.channel.name}/ad_widget',
         creationParams: instanceManager.adIdFor(widget.ad),
-        creationParamsCodec: StandardMessageCodec(),
+        creationParamsCodec: const StandardMessageCodec(),
       );
       height = _height;
     }
 
-    return Container(
+    return SizedBox(
       height: max(1, height),
       width: widget.width == null ? 1 : max(1, widget.width!),
       child: platformView,
@@ -921,7 +921,7 @@ class FluidAdManagerBannerAd extends AdManagerBannerAd {
     required AdManagerAdRequest request,
     this.onFluidAdHeightChangedListener,
   }) : super(
-          sizes: [FluidAdSize()],
+          sizes: [const FluidAdSize()],
           adUnitId: adUnitId,
           listener: listener,
           request: request,

@@ -56,8 +56,8 @@ class _AppsListScreenContent extends StatelessWidget {
 
   const _AppsListScreenContent(
       {Key? key,
-      this.includeSystemApps: false,
-      this.onlyAppsWithLaunchIntent: false})
+      this.includeSystemApps = false,
+      this.onlyAppsWithLaunchIntent = false})
       : super(key: key);
 
   @override

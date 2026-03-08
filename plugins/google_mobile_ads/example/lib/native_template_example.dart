@@ -20,6 +20,8 @@ import 'constants.dart';
 
 /// This example demonstrates native templates.
 class NativeTemplateExample extends StatefulWidget {
+  const NativeTemplateExample({Key? key}) : super(key: key);
+
   @override
   _NativeTemplateExampleExampleState createState() =>
       _NativeTemplateExampleExampleState();
@@ -32,7 +34,7 @@ class _NativeTemplateExampleExampleState extends State<NativeTemplateExample> {
   @override
   Widget build(BuildContext context) => Scaffold(
       appBar: AppBar(
-        title: Text('Native templates example'),
+        title: const Text('Native templates example'),
       ),
       body: Center(
         child: Padding(
@@ -58,7 +60,7 @@ class _NativeTemplateExampleExampleState extends State<NativeTemplateExample> {
                       child: AdWidget(ad: _nativeAd!),
                     ));
               }
-              return Text(
+              return const Text(
                 Constants.placeholderText,
                 style: TextStyle(fontSize: 24),
               );
@@ -73,7 +75,7 @@ class _NativeTemplateExampleExampleState extends State<NativeTemplateExample> {
     // Create the ad objects and load ads.
     _nativeAd = NativeAd(
       adUnitId: '/6499/example/native',
-      request: AdRequest(),
+      request: const AdRequest(),
       listener: NativeAdListener(
         onAdLoaded: (Ad ad) {
           print('$NativeAd loaded.');

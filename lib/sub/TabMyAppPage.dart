@@ -17,16 +17,9 @@ class TabMyAppPage extends StatefulWidget {
 }
 
 class _TabMyAppPageState extends State<TabMyAppPage> {
-  List<String> pageList = [
-    '전체',
-    'SNS',
-    '구글&폰앱',
-    '사용자',
-    '금융',
-    '기관',
-  ];
+  List<String> pageList = ['전체', 'SNS', '구글&폰앱', '사용자', '금융', '기관'];
   late String dropdownValue;
-  PageController _pageController = PageController(initialPage: 0);
+  final PageController _pageController = PageController(initialPage: 0);
 
   // ValueNotifier<int> _pageCountNotifier = ValueNotifier<int>(0);
 
@@ -38,7 +31,7 @@ class _TabMyAppPageState extends State<TabMyAppPage> {
     dropdownValue = pageList[0];
     _pages = [
       PageMyUserDef(),
-//      PageMyCfgList(),
+      //      PageMyCfgList(),
       PageMyUserSns(),
       PageMyUserInstSys(),
       PageMyUserEtc(),
@@ -115,8 +108,9 @@ class _TabMyAppPageState extends State<TabMyAppPage> {
                             });
                           }
                         },
-                        items: pageList
-                            .map<DropdownMenuItem<String>>((String value) {
+                        items: pageList.map<DropdownMenuItem<String>>((
+                          String value,
+                        ) {
                           return DropdownMenuItem<String>(
                             value: value,
                             child: Text(

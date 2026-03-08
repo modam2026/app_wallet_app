@@ -22,6 +22,8 @@ import 'dart:io' show Platform;
 /// This example demonstrates inline ads in a list view, where the ad objects
 /// live for the lifetime of this widget.
 class ReusableInlineExample extends StatefulWidget {
+  const ReusableInlineExample({Key? key}) : super(key: key);
+
   @override
   _ReusableInlineExampleState createState() => _ReusableInlineExampleState();
 }
@@ -50,7 +52,7 @@ class _ReusableInlineExampleState extends State<ReusableInlineExample> {
             itemBuilder: (BuildContext context, int index) {
               final BannerAd? bannerAd = _bannerAd;
               if (index == 5 && _bannerAdIsLoaded && bannerAd != null) {
-                return Container(
+                return SizedBox(
                     height: bannerAd.size.height.toDouble(),
                     width: bannerAd.size.width.toDouble(),
                     child: AdWidget(ad: bannerAd));
@@ -60,7 +62,7 @@ class _ReusableInlineExampleState extends State<ReusableInlineExample> {
               if (index == 10 &&
                   _adManagerBannerAdIsLoaded &&
                   adManagerBannerAd != null) {
-                return Container(
+                return SizedBox(
                     height: adManagerBannerAd.sizes[0].height.toDouble(),
                     width: adManagerBannerAd.sizes[0].width.toDouble(),
                     child: AdWidget(ad: _adManagerBannerAd!));
@@ -68,11 +70,11 @@ class _ReusableInlineExampleState extends State<ReusableInlineExample> {
 
               final NativeAd? nativeAd = _nativeAd;
               if (index == 15 && _nativeAdIsLoaded && nativeAd != null) {
-                return Container(
+                return SizedBox(
                     width: 250, height: 350, child: AdWidget(ad: nativeAd));
               }
 
-              return Text(
+              return const Text(
                 Constants.placeholderText,
                 style: TextStyle(fontSize: 24),
               );
@@ -104,14 +106,14 @@ class _ReusableInlineExampleState extends State<ReusableInlineExample> {
           onAdOpened: (Ad ad) => print('$BannerAd onAdOpened.'),
           onAdClosed: (Ad ad) => print('$BannerAd onAdClosed.'),
         ),
-        request: AdRequest())
+        request: const AdRequest())
       ..load();
 
     _nativeAd = NativeAd(
       adUnitId: Platform.isAndroid
           ? 'ca-app-pub-3940256099942544/2247696110'
           : 'ca-app-pub-3940256099942544/3986624511',
-      request: AdRequest(),
+      request: const AdRequest(),
       factoryId: 'adFactoryExample',
       listener: NativeAdListener(
         onAdLoaded: (Ad ad) {
@@ -131,7 +133,7 @@ class _ReusableInlineExampleState extends State<ReusableInlineExample> {
 
     _adManagerBannerAd = AdManagerBannerAd(
       adUnitId: '/6499/example/banner',
-      request: AdManagerAdRequest(nonPersonalizedAds: true),
+      request: const AdManagerAdRequest(nonPersonalizedAds: true),
       sizes: <AdSize>[AdSize.largeBanner],
       listener: AdManagerBannerAdListener(
         onAdLoaded: (Ad ad) {

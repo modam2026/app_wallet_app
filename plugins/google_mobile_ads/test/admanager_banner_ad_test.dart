@@ -41,14 +41,14 @@ void main() {
             return Future<void>.value();
           default:
             assert(false);
-            return null;
+            return;
         }
       });
     });
 
     test('android loaded events', () async {
       debugDefaultTargetPlatformOverride = TargetPlatform.android;
-      AdManagerAdRequest request = AdManagerAdRequest();
+      AdManagerAdRequest request = const AdManagerAdRequest();
 
       // Check that listener callbacks are invoked
       Completer<Ad> loaded = Completer<Ad>();
@@ -127,7 +127,7 @@ void main() {
     });
 
     test('onAdFailedToLoad banner', () async {
-      var testOnAdFailedToLoad = (adId) async {
+      Future<void> testOnAdFailedToLoad(adId) async {
         final Completer<List<dynamic>> resultsCompleter =
             Completer<List<dynamic>>();
 
@@ -137,7 +137,7 @@ void main() {
           listener: AdManagerBannerAdListener(
               onAdFailedToLoad: (Ad ad, LoadAdError error) =>
                   resultsCompleter.complete(<dynamic>[ad, error])),
-          request: AdManagerAdRequest(),
+          request: const AdManagerAdRequest(),
         );
 
         await banner.load();
@@ -197,7 +197,7 @@ void main() {
         expect(responses.first.adError!.code, 1);
         expect(responses.first.adError!.message, 'error-message');
         expect(responses.first.adError!.domain, 'domain');
-      };
+      }
 
       debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
       await testOnAdFailedToLoad(0);
@@ -208,7 +208,7 @@ void main() {
 
     test('ios loaded events', () async {
       debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
-      AdManagerAdRequest request = AdManagerAdRequest();
+      AdManagerAdRequest request = const AdManagerAdRequest();
 
       // Check that listener callbacks are invoked
       Completer<Ad> loaded = Completer<Ad>();
@@ -296,7 +296,7 @@ void main() {
         adUnitId: 'test-ad-unit',
         sizes: [AdSize.banner],
         listener: AdManagerBannerAdListener(),
-        request: AdManagerAdRequest(),
+        request: const AdManagerAdRequest(),
       );
 
       await banner.load();
@@ -317,7 +317,7 @@ void main() {
         adUnitId: 'test-ad-unit',
         sizes: [AdSize.banner],
         listener: AdManagerBannerAdListener(),
-        request: AdManagerAdRequest(),
+        request: const AdManagerAdRequest(),
       );
 
       banner.load();

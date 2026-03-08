@@ -42,7 +42,7 @@ void main() {
             return Future<void>.value();
           default:
             assert(false);
-            return null;
+            return;
         }
       });
     });
@@ -79,7 +79,7 @@ void main() {
         ),
         onFluidAdHeightChangedListener: (ad, height) =>
             heightChangedCompleter.complete([ad, height]),
-        request: AdManagerAdRequest(),
+        request: const AdManagerAdRequest(),
       );
 
       await fluidAd.load();
@@ -87,8 +87,8 @@ void main() {
         isMethodCall('loadFluidAd', arguments: <String, dynamic>{
           'adId': 0,
           'adUnitId': 'testId',
-          'sizes': <AdSize>[FluidAdSize()],
-          'request': AdManagerAdRequest(),
+          'sizes': <AdSize>[const FluidAdSize()],
+          'request': const AdManagerAdRequest(),
         })
       ]);
 
@@ -165,7 +165,7 @@ void main() {
         ),
         onFluidAdHeightChangedListener: (ad, height) =>
             heightChangedCompleter.complete([ad, height]),
-        request: AdManagerAdRequest(),
+        request: const AdManagerAdRequest(),
       );
 
       await fluidAd.load();
@@ -173,8 +173,8 @@ void main() {
         isMethodCall('loadFluidAd', arguments: <String, dynamic>{
           'adId': 0,
           'adUnitId': 'testId',
-          'sizes': <AdSize>[FluidAdSize()],
-          'request': AdManagerAdRequest(),
+          'sizes': <AdSize>[const FluidAdSize()],
+          'request': const AdManagerAdRequest(),
         })
       ]);
 

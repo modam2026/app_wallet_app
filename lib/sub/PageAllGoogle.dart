@@ -40,8 +40,9 @@ class _PageAllGoogleState extends State<PageAllGoogle> {
           ],
         ),
         body: FutureBuilder<List<CachedApplication>>(
-          future: commonHelper
-              .getListCachedApplication(commonHelper.appDataWithInst),
+          future: commonHelper.getListCachedApplication(
+            commonHelper.appDataWithInst,
+          ),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return Center(child: CircularProgressIndicator());
@@ -54,19 +55,19 @@ class _PageAllGoogleState extends State<PageAllGoogle> {
 
               return ListView.separated(
                 itemCount: apps.length,
-                separatorBuilder: (context, index) => Divider(
-                  color: Colors.grey[350],
-                  height: 1,
-                  thickness: 1.0,
-                ),
+                separatorBuilder: (context, index) =>
+                    Divider(color: Colors.grey[350], height: 1, thickness: 1.0),
                 itemBuilder: (context, index) {
-                  var appWithIcon = apps[index] as CachedApplication;
+                  var appWithIcon = apps[index];
 
-                  ImageProvider icon =
-                      MemoryImage(base64Decode(appWithIcon.icon));
+                  ImageProvider icon = MemoryImage(
+                    base64Decode(appWithIcon.icon),
+                  );
                   return FutureBuilder<bool>(
                     future: SQLHelper.isAppInDatabase(
-                        appWithIcon.appName, appWithIcon.packageName),
+                      appWithIcon.appName,
+                      appWithIcon.packageName,
+                    ),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return CircularProgressIndicator();
@@ -81,28 +82,34 @@ class _PageAllGoogleState extends State<PageAllGoogle> {
                           leading: Image(image: icon, width: 50, height: 50),
                           title: Text(appWithIcon.appName),
                           subtitle: Text(appWithIcon.packageName),
-                          trailing:
-                              Row(mainAxisSize: MainAxisSize.min, children: [
-                            IconButton(
-                              icon: Icon(isAppInDatabase
-                                  ? CupertinoIcons.minus_circled
-                                  : CupertinoIcons.add_circled_solid),
-                              onPressed: () async {
-                                if (isAppInDatabase) {
-                                  await SQLHelper.deleteMyIntrnAppInfo(
-                                      appWithIcon.appName,
-                                      appWithIcon.packageName);
-                                  commonHelper.deleteApp(appWithIcon);
-                                } else {
-                                  await SQLHelper.addMyIntrnAppInfo(
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: Icon(
+                                  isAppInDatabase
+                                      ? CupertinoIcons.minus_circled
+                                      : CupertinoIcons.add_circled_solid,
+                                ),
+                                onPressed: () async {
+                                  if (isAppInDatabase) {
+                                    await SQLHelper.deleteMyIntrnAppInfo(
                                       appWithIcon.appName,
                                       appWithIcon.packageName,
-                                      "All");
-                                }
-                                setState(() {});
-                              },
-                            ),
-                          ]),
+                                    );
+                                    commonHelper.deleteApp(appWithIcon);
+                                  } else {
+                                    await SQLHelper.addMyIntrnAppInfo(
+                                      appWithIcon.appName,
+                                      appWithIcon.packageName,
+                                      "All",
+                                    );
+                                  }
+                                  setState(() {});
+                                },
+                              ),
+                            ],
+                          ),
                           onTap: () {
                             commonHelper.openApp(appWithIcon);
                           },

@@ -25,6 +25,8 @@ import 'constants.dart';
 /// Loads an anchored adaptive banner ad and displays it at the bottom of the
 /// screen. This also handles loading a new ad on orientation change.
 class AnchoredAdaptiveExample extends StatefulWidget {
+  const AnchoredAdaptiveExample({Key? key}) : super(key: key);
+
   @override
   _AnchoredAdaptiveExampleState createState() =>
       _AnchoredAdaptiveExampleState();
@@ -64,7 +66,7 @@ class _AnchoredAdaptiveExampleState extends State<AnchoredAdaptiveExample> {
           ? 'ca-app-pub-3940256099942544/6300978111'
           : 'ca-app-pub-3940256099942544/2934735716',
       size: size,
-      request: AdRequest(),
+      request: const AdRequest(),
       listener: BannerAdListener(
         onAdLoaded: (Ad ad) {
           print('$ad loaded: ${ad.responseInfo}');
@@ -114,7 +116,7 @@ class _AnchoredAdaptiveExampleState extends State<AnchoredAdaptiveExample> {
   @override
   Widget build(BuildContext context) => Scaffold(
         appBar: AppBar(
-          title: Text('Anchored adaptive banner example'),
+          title: const Text('Anchored adaptive banner example'),
         ),
         body: Center(
           child: Stack(
@@ -123,7 +125,7 @@ class _AnchoredAdaptiveExampleState extends State<AnchoredAdaptiveExample> {
               ListView.separated(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   itemBuilder: (context, index) {
-                    return Text(
+                    return const Text(
                       Constants.placeholderText,
                       style: TextStyle(fontSize: 24),
                     );

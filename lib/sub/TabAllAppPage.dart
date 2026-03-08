@@ -15,7 +15,7 @@ class TabAllAppPage extends StatefulWidget {
 class _TabAllAppPageState extends State<TabAllAppPage> {
   List<String> pageList = ['사용자', '구글&폰앱', '시스템'];
   late String dropdownValue;
-  PageController _pageController = PageController(initialPage: 0);
+  final PageController _pageController = PageController(initialPage: 0);
 
   // ValueNotifier<int> _pageCountNotifier = ValueNotifier<int>(0);
 
@@ -25,11 +25,7 @@ class _TabAllAppPageState extends State<TabAllAppPage> {
   void initState() {
     super.initState();
     dropdownValue = pageList[0];
-    _pages = [
-      PageAllUserDef(),
-      PageAllGoogle(),
-      PageAllSystem(),
-    ];
+    _pages = [PageAllUserDef(), PageAllGoogle(), PageAllSystem()];
 
     //   _pageController.addListener(() {
     //     int? nextPage = _pageController.page?.round();
@@ -100,8 +96,9 @@ class _TabAllAppPageState extends State<TabAllAppPage> {
                             });
                           }
                         },
-                        items: pageList
-                            .map<DropdownMenuItem<String>>((String value) {
+                        items: pageList.map<DropdownMenuItem<String>>((
+                          String value,
+                        ) {
                           return DropdownMenuItem<String>(
                             value: value,
                             child: Text(

@@ -1014,7 +1014,7 @@ class AdMessageCodec extends StandardMessageCodec {
           height: height.toInt(),
         );
       case _valueFluidAdSize:
-        return FluidAdSize();
+        return const FluidAdSize();
       case _valueAdRequest:
         return AdRequest(
           keywords: readValueOfType(buffer.getUint8(), buffer)?.cast<String>(),
@@ -1227,7 +1227,7 @@ class AdMessageCodec extends StandardMessageCodec {
       writeValue(buffer, value.orientationValue);
     } else if (value is AnchoredAdaptiveBannerAdSize) {
       buffer.putUint8(_valueAnchoredAdaptiveBannerAdSize);
-      var orientationValue;
+      String orientationValue = '';
       if (value.orientation != null) {
         orientationValue = describeEnum(value.orientation as Orientation);
       }

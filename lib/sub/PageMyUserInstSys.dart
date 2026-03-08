@@ -36,7 +36,9 @@ class _PageMyUserInstSysState extends State<PageMyUserInstSys> {
   }
 
   void _showConfirmationDialog(
-      CachedApplication appWithIcon, BuildContext context) {
+    CachedApplication appWithIcon,
+    BuildContext context,
+  ) {
     commonHelper.showConfirmationDialog(appWithIcon, context, () {
       setState(() {});
     });
@@ -46,9 +48,7 @@ class _PageMyUserInstSysState extends State<PageMyUserInstSys> {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
-        appBar: AppBar(
-          title: Text("구글&폰앱 리스트(3/6)"),
-        ),
+        appBar: AppBar(title: Text("구글&폰앱 리스트(3/6)")),
         body: FutureBuilder<List<CachedApplication>>(
           future: _getInstalledApplications(),
           builder: (context, snapshot) {
@@ -61,27 +61,28 @@ class _PageMyUserInstSysState extends State<PageMyUserInstSys> {
 
               return ListView.separated(
                 itemCount: apps.length,
-                separatorBuilder: (context, index) => Divider(
-                  color: Colors.grey[350],
-                  height: 1,
-                  thickness: 1.0,
-                ),
+                separatorBuilder: (context, index) =>
+                    Divider(color: Colors.grey[350], height: 1, thickness: 1.0),
                 itemBuilder: (context, index) {
-                  var appWithIcon = apps[index] as CachedApplication;
-                  ImageProvider icon =
-                      MemoryImage(base64Decode(appWithIcon.icon));
+                  var appWithIcon = apps[index];
+                  ImageProvider icon = MemoryImage(
+                    base64Decode(appWithIcon.icon),
+                  );
                   return ListTile(
                     leading: Image(image: icon, width: 50, height: 50),
                     title: Text(appWithIcon.appName),
                     // subtitle: Text(appWithIcon.packageName),
-                    trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-                      IconButton(
-                        icon: Icon(CupertinoIcons.ellipsis_vertical),
-                        onPressed: () {
-                          _showConfirmationDialog(appWithIcon, context);
-                        },
-                      ),
-                    ]),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: Icon(CupertinoIcons.ellipsis_vertical),
+                          onPressed: () {
+                            _showConfirmationDialog(appWithIcon, context);
+                          },
+                        ),
+                      ],
+                    ),
                     onTap: () {
                       commonHelper.openApp(appWithIcon);
                     },

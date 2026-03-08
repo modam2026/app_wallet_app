@@ -85,11 +85,11 @@ class _DrawerPageState extends State<DrawerPage> {
     return Consumer<DicService>(
       builder: (context, dicService, child) {
         // FocusNode를 생성합니다.
-        FocusNode _focusNode = FocusNode();
+        FocusNode focusNode = FocusNode();
 
         // TextField가 포커스를 잃었는지 확인하기 위한 리스너를 추가합니다.
-        _focusNode.addListener(() {
-          if (!_focusNode.hasFocus) {
+        focusNode.addListener(() {
+          if (!focusNode.hasFocus) {
             // TextField가 포커스를 잃었을 때 실행되는 코드입니다.
             String value = webUrlController.text;
             RegExp pattern = RegExp(
@@ -197,7 +197,7 @@ class _DrawerPageState extends State<DrawerPage> {
                       },
                     ),
                   ),
-                  Container(
+                  SizedBox(
                     width: 80,
                     child: PopupMenuButton<String>(
                       child: ElevatedButton(
@@ -356,7 +356,7 @@ class _DrawerPageState extends State<DrawerPage> {
                   controller: webUrlController,
                   keyboardType: TextInputType.multiline,
                   maxLines: 3,
-                  focusNode: _focusNode, // 여기에 생성한 FocusNode를 지정합니다.
+                  focusNode: focusNode, // 여기에 생성한 FocusNode를 지정합니다.
                   decoration: InputDecoration(
                     hintText:
                         "사이트 URL을 입력시 http 생략해 주세요 \n ex) https://www.google.com -> \n        www.google.com",

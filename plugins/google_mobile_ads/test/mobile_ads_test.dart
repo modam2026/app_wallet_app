@@ -434,19 +434,19 @@ void main() {
     });
 
     test('encode/decode native template font style', () {
-      NativeTemplateFontStyle.values.forEach((fontStyle) {
+      for (var fontStyle in NativeTemplateFontStyle.values) {
         final byteData = codec.encodeMessage(fontStyle)!;
         final result = codec.decodeMessage(byteData);
         expect(result, fontStyle);
-      });
+      }
     });
 
     test('encode/decode native template type', () {
-      TemplateType.values.forEach((templateType) {
+      for (var templateType in TemplateType.values) {
         final byteData = codec.encodeMessage(templateType)!;
         final result = codec.decodeMessage(byteData);
         expect(result, templateType);
-      });
+      }
     });
 
     test('encode/decode empty native text style', () {
@@ -513,7 +513,7 @@ void main() {
           tertiaryTextStyle: NativeTemplateTextStyle(
             size: 15,
           ),
-          mainBackgroundColor: Color.fromARGB(1, 2, 3, 4),
+          mainBackgroundColor: const Color.fromARGB(1, 2, 3, 4),
           cornerRadius: 12);
       final byteData = codec.encodeMessage(templateStyle);
       final NativeTemplateStyle result = codec.decodeMessage(byteData);

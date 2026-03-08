@@ -42,7 +42,7 @@ void main() {
             return Future<void>.value();
           default:
             assert(false);
-            return null;
+            return;
         }
       });
     });
@@ -50,7 +50,7 @@ void main() {
     test('load show android', () async {
       debugDefaultTargetPlatformOverride = TargetPlatform.android;
       AppOpenAd? appOpenAd;
-      AdRequest request = AdRequest();
+      AdRequest request = const AdRequest();
       await AppOpenAd.load(
         adUnitId: 'test-ad-unit',
         request: request,
@@ -148,7 +148,7 @@ void main() {
       debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
 
       AppOpenAd? appOpenAd;
-      AdRequest request = AdRequest();
+      AdRequest request = const AdRequest();
       await AppOpenAd.load(
         adUnitId: 'test-ad-unit',
         request: request,

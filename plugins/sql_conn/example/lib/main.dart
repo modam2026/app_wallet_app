@@ -9,6 +9,8 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
@@ -87,8 +89,7 @@ class _TestPageState extends State<TestPage> {
                       "CREATE TABLE Persons (PersonID int, LastName varchar(255), FirstName varchar(255), Address varchar(255),City varchar(255))"),
                   child: const Text("Create Table")),
               ElevatedButton(
-                  onPressed: () => write(
-                      "DROP TABLE Persons"),
+                  onPressed: () => write("DROP TABLE Persons"),
                   child: const Text("Delete Table")),
               ElevatedButton(
                   onPressed: () => SqlConn.disconnect(),

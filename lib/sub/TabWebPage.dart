@@ -86,7 +86,7 @@ class _TabWebPageState extends State<TabWebPage> {
   @override
   Widget build(BuildContext context) {
     final dicService = Provider.of<DicService>(context, listen: false);
-    String? _captionsTag = "";
+    String? captionsTag = "";
 
     if (dicService.callbackStatus == true) {
       dicService.callbackStatus = false;
@@ -117,34 +117,39 @@ class _TabWebPageState extends State<TabWebPage> {
                     child: ListView.separated(
                       itemCount: _captions.length,
                       itemBuilder: (BuildContext context, index) {
-                        _captionsTag = _captions[index]['tag'];
+                        captionsTag = _captions[index]['tag'];
 
                         AssetImage assetImage;
                         Color? cardColor;
-                        switch (_captionsTag) {
+                        switch (captionsTag) {
                           case 'd':
-                            assetImage =
-                                AssetImage('assets/images/web_address_d.png');
+                            assetImage = AssetImage(
+                              'assets/images/web_address_d.png',
+                            );
                             cardColor = Colors.blue[100];
                             break;
                           case 'w':
-                            assetImage =
-                                AssetImage('assets/images/web_address_w.png');
+                            assetImage = AssetImage(
+                              'assets/images/web_address_w.png',
+                            );
                             cardColor = Color.fromARGB(255, 207, 208, 248);
                             break;
                           case 'm':
-                            assetImage =
-                                AssetImage('assets/images/web_address_m.png');
+                            assetImage = AssetImage(
+                              'assets/images/web_address_m.png',
+                            );
                             cardColor = Color.fromARGB(255, 255, 211, 130);
                             break;
                           case 'g':
-                            assetImage =
-                                AssetImage('assets/images/web_address_g.png');
+                            assetImage = AssetImage(
+                              'assets/images/web_address_g.png',
+                            );
                             cardColor = Color.fromARGB(255, 238, 241, 204);
                             break;
                           default:
-                            assetImage =
-                                AssetImage('assets/images/web_address_e.png');
+                            assetImage = AssetImage(
+                              'assets/images/web_address_e.png',
+                            );
                             cardColor = Color.fromARGB(255, 200, 216, 214);
                             break;
                         }
@@ -166,50 +171,53 @@ class _TabWebPageState extends State<TabWebPage> {
                               ),
                               title: Text(
                                 _captions[index]['caption'],
-                                style: TextStyle(
-                                  fontSize: 20,
-                                ),
+                                style: TextStyle(fontSize: 20),
                               ),
                               trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    IconButton(
-                                      icon: Icon(
-                                        Icons.vertical_align_top,
-                                      ),
-                                      onPressed: () async {
-                                        final objMaxOdr =
-                                            await SQLWebHelper.getMaxUsedCnt();
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: Icon(Icons.vertical_align_top),
+                                    onPressed: () async {
+                                      final objMaxOdr =
+                                          await SQLWebHelper.getMaxUsedCnt();
 
-                                        int iMaxOrder = 0;
+                                      int iMaxOrder = 0;
 
-                                        if (objMaxOdr.isNotEmpty) {
-                                          iMaxOrder = objMaxOdr[0]['max_order'];
-                                        }
+                                      if (objMaxOdr.isNotEmpty) {
+                                        iMaxOrder = objMaxOdr[0]['max_order'];
+                                      }
 
-                                        SQLWebHelper.updateMaxUsedCnt(
-                                            _captions[index]['id'], iMaxOrder);
+                                      SQLWebHelper.updateMaxUsedCnt(
+                                        _captions[index]['id'],
+                                        iMaxOrder,
+                                      );
 
-                                        refreshWebUrls();
-                                      },
+                                      refreshWebUrls();
+                                    },
+                                  ),
+                                  IconButton(
+                                    icon: Icon(
+                                      CupertinoIcons.pencil_circle_fill,
                                     ),
-                                    IconButton(
-                                      icon: Icon(
-                                          CupertinoIcons.pencil_circle_fill),
-                                      onPressed: () {
-                                        Scaffold.of(context).openEndDrawer();
-                                        dicService.dicCaptionItem =
-                                            _captions[index];
-                                        refreshWebUrls();
-                                      },
-                                    ),
-                                  ]),
+                                    onPressed: () {
+                                      Scaffold.of(context).openEndDrawer();
+                                      dicService.dicCaptionItem =
+                                          _captions[index];
+                                      refreshWebUrls();
+                                    },
+                                  ),
+                                ],
+                              ),
                               onTap: () async {
                                 SQLWebHelper.updateUsedCnt(
-                                    _captions[index]['id']);
+                                  _captions[index]['id'],
+                                );
                                 dicService.webData = _captions[index];
-                                _launchUrl(context,
-                                    "http://${_captions[index]['web_url']}");
+                                _launchUrl(
+                                  context,
+                                  "http://${_captions[index]['web_url']}",
+                                );
 
                                 refreshWebUrls();
                               },
@@ -219,14 +227,18 @@ class _TabWebPageState extends State<TabWebPage> {
                       },
                       separatorBuilder: (BuildContext context, int index) {
                         return Divider(
-                            height: 2, thickness: 2, color: Colors.white);
+                          height: 2,
+                          thickness: 2,
+                          color: Colors.white,
+                        );
                       },
                     ),
                   ),
                 ),
-                Container(
+                SizedBox(
                   height: 90,
-                  child: Container(), // AdMob 비활성화. 스토어 배포 시 AdWidget(ad: _bannerAd) 복구
+                  child:
+                      Container(), // AdMob 비활성화. 스토어 배포 시 AdWidget(ad: _bannerAd) 복구
                   // child: _bannerAd != null ? AdWidget(ad: _bannerAd) : Container(),
                 ),
               ],
@@ -238,8 +250,9 @@ class _TabWebPageState extends State<TabWebPage> {
                 child: Column(
                   children: [
                     DrawerWebPage(
-                        onItemSelected: refreshThisPage,
-                        captionItem: dicService.dicCaptionItem),
+                      onItemSelected: refreshThisPage,
+                      captionItem: dicService.dicCaptionItem,
+                    ),
                   ],
                 ),
               ),

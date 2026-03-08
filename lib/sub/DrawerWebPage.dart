@@ -97,11 +97,11 @@ class _DrawerWebPageState extends State<DrawerWebPage> {
     return Consumer<DicService>(
       builder: (context, dicService, child) {
         // FocusNode를 생성합니다.
-        FocusNode _focusNode = FocusNode();
+        FocusNode focusNode = FocusNode();
 
         // TextField가 포커스를 잃었는지 확인하기 위한 리스너를 추가합니다.
-        _focusNode.addListener(() {
-          if (!_focusNode.hasFocus) {
+        focusNode.addListener(() {
+          if (!focusNode.hasFocus) {
             // TextField가 포커스를 잃었을 때 실행되는 코드입니다.
             String value = webUrlController.text;
             RegExp pattern = RegExp(
@@ -117,263 +117,271 @@ class _DrawerWebPageState extends State<DrawerWebPage> {
         });
         return SafeArea(
           child: SingleChildScrollView(
-            child: Column(children: [
-              // ----- AdMob 비활성화. 스토어 배포 시 아래 블록 주석 해제 -----
-              // if (_isAdLoaded)
-              //   Align(
-              //     alignment: Alignment.centerLeft,
-              //     child: Container(
-              //       width: MediaQuery.of(context).size.width * 0.84,
-              //       height: _bannerAd.size.height.toDouble(),
-              //       child: AdWidget(ad: _bannerAd),
-              //     ),
-              //   ),
-              Row(
-                children: [
-                  /// 일자 입력창
-                  SizedBox(
-                    width: 250,
-                    height: 50,
-                    child: Center(
-                      child: Text(
-                        "       웹 사이트 수정",
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold, // 텍스트를 굵게 만듭니다.
-                          color: Colors.red, // 텍스트 색상을 변경합니다.
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(
-                width: 100,
-                height: 20,
-              ),
-              Container(
-                margin: EdgeInsets.only(left: 10), // 왼쪽 마진을 10으로 설정
-                alignment: Alignment.centerLeft,
-                child: Row(
+            child: Column(
+              children: [
+                // ----- AdMob 비활성화. 스토어 배포 시 아래 블록 주석 해제 -----
+                // if (_isAdLoaded)
+                //   Align(
+                //     alignment: Alignment.centerLeft,
+                //     child: Container(
+                //       width: MediaQuery.of(context).size.width * 0.84,
+                //       height: _bannerAd.size.height.toDouble(),
+                //       child: AdWidget(ad: _bannerAd),
+                //     ),
+                //   ),
+                Row(
                   children: [
-                    CircleAvatar(
-                      radius: 8, // 원의 크기를 조절합니다.
-                      backgroundColor: Colors.red, // 원의 배경색을 설정합니다.
-                      child: Text(
-                        '1', // 원 안의 숫자를 설정합니다.
-                        style: TextStyle(
-                          color: Colors.white, // 숫자의 색상을 설정합니다.
-                          fontSize: 12, // 숫자의 크기를 설정합니다.
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 10),
+                    /// 일자 입력창
                     SizedBox(
-                      width: 230,
-                      child: Text(
-                        "사이트명",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold, // 텍스트를 굵게 만듭니다.
-                          color: Colors.red, // 텍스트 색상을 변경합니다.
+                      width: 250,
+                      height: 50,
+                      child: Center(
+                        child: Text(
+                          "       웹 사이트 수정",
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold, // 텍스트를 굵게 만듭니다.
+                            color: Colors.red, // 텍스트 색상을 변경합니다.
+                          ),
                         ),
                       ),
                     ),
                   ],
                 ),
-              ),
-              Container(
-                margin: EdgeInsets.fromLTRB(10, 0, 10, 10),
-                child: TextField(
-                  style: TextStyle(fontSize: 15.0),
-                  controller: captionController,
-                  keyboardType: TextInputType.multiline,
-                  maxLines: 2,
-                  decoration: InputDecoration(
-                    hintText: "사이트명을 입력해주세요.",
-                    focusedBorder: OutlineInputBorder(
-                        borderSide:
-                            BorderSide(width: 1, color: Colors.redAccent)),
+                SizedBox(width: 100, height: 20),
+                Container(
+                  margin: EdgeInsets.only(left: 10), // 왼쪽 마진을 10으로 설정
+                  alignment: Alignment.centerLeft,
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 8, // 원의 크기를 조절합니다.
+                        backgroundColor: Colors.red, // 원의 배경색을 설정합니다.
+                        child: Text(
+                          '1', // 원 안의 숫자를 설정합니다.
+                          style: TextStyle(
+                            color: Colors.white, // 숫자의 색상을 설정합니다.
+                            fontSize: 12, // 숫자의 크기를 설정합니다.
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 10),
+                      SizedBox(
+                        width: 230,
+                        child: Text(
+                          "사이트명",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold, // 텍스트를 굵게 만듭니다.
+                            color: Colors.red, // 텍스트 색상을 변경합니다.
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-              SizedBox(
-                width: 100,
-                height: 20,
-              ),
-              Container(
-                margin: EdgeInsets.only(left: 10), // 왼쪽 마진을 10으로 설정
-                alignment: Alignment.centerLeft,
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 8, // 원의 크기를 조절합니다.
-                      backgroundColor: Colors.red, // 원의 배경색을 설정합니다.
-                      child: Text(
-                        '2', // 원 안의 숫자를 설정합니다.
-                        style: TextStyle(
-                          color: Colors.white, // 숫자의 색상을 설정합니다.
-                          fontSize: 12, // 숫자의 크기를 설정합니다.
+                Container(
+                  margin: EdgeInsets.fromLTRB(10, 0, 10, 10),
+                  child: TextField(
+                    style: TextStyle(fontSize: 15.0),
+                    controller: captionController,
+                    keyboardType: TextInputType.multiline,
+                    maxLines: 2,
+                    decoration: InputDecoration(
+                      hintText: "사이트명을 입력해주세요.",
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          width: 1,
+                          color: Colors.redAccent,
                         ),
                       ),
                     ),
-                    SizedBox(width: 10),
-                    SizedBox(
-                      width: 230,
-                      child: Text(
-                        "사이트 URL",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold, // 텍스트를 굵게 만듭니다.
-                          color: Colors.red, // 텍스트 색상을 변경합니다.
+                  ),
+                ),
+                SizedBox(width: 100, height: 20),
+                Container(
+                  margin: EdgeInsets.only(left: 10), // 왼쪽 마진을 10으로 설정
+                  alignment: Alignment.centerLeft,
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 8, // 원의 크기를 조절합니다.
+                        backgroundColor: Colors.red, // 원의 배경색을 설정합니다.
+                        child: Text(
+                          '2', // 원 안의 숫자를 설정합니다.
+                          style: TextStyle(
+                            color: Colors.white, // 숫자의 색상을 설정합니다.
+                            fontSize: 12, // 숫자의 크기를 설정합니다.
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 10),
+                      SizedBox(
+                        width: 230,
+                        child: Text(
+                          "사이트 URL",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold, // 텍스트를 굵게 만듭니다.
+                            color: Colors.red, // 텍스트 색상을 변경합니다.
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  margin: EdgeInsets.fromLTRB(10, 0, 10, 10),
+                  child: TextField(
+                    style: TextStyle(fontSize: 16.0),
+                    controller: webUrlController,
+                    keyboardType: TextInputType.multiline,
+                    maxLines: 3,
+                    focusNode: focusNode, // 여기에 생성한 FocusNode를 지정합니다.
+                    decoration: InputDecoration(
+                      hintText: "사이트 URL을 입력하세요",
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          width: 1,
+                          color: Colors.redAccent,
                         ),
                       ),
                     ),
-                  ],
+                  ),
                 ),
-              ),
-              Container(
-                margin: EdgeInsets.fromLTRB(10, 0, 10, 10),
-                child: TextField(
-                  style: TextStyle(fontSize: 16.0),
-                  controller: webUrlController,
-                  keyboardType: TextInputType.multiline,
-                  maxLines: 3,
-                  focusNode: _focusNode, // 여기에 생성한 FocusNode를 지정합니다.
-                  decoration: InputDecoration(
-                    hintText: "사이트 URL을 입력하세요",
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(width: 1, color: Colors.redAccent),
+                Container(
+                  margin: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  width: MediaQuery.of(context).size.width - 32,
+                  height: 50,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blueGrey,
+                      alignment: Alignment.centerLeft,
+                      padding: EdgeInsets.fromLTRB(
+                        10,
+                        0,
+                        0,
+                        0,
+                      ), // 버튼 내부의 정렬을 중앙으로 설정
+                    ),
+                    onPressed: () async {
+                      String strCaptionCtrl = captionController.text;
+                      String strWebUrlCtrl = webUrlController.text;
+                      String? strTagCtrl = "";
+
+                      switch (strSeletedClass) {
+                        case "매일":
+                          strTagCtrl = "d";
+                          break;
+                        case "매주":
+                          strTagCtrl = "w";
+                          break;
+                        case "매월":
+                          strTagCtrl = "m";
+                          break;
+                        case "게임":
+                          strTagCtrl = "g";
+                          break;
+                        default:
+                          strTagCtrl = "e";
+                          break;
+                      }
+
+                      final chkData = await SQLWebHelper.chkCaption(
+                        strWebUrlCtrl,
+                      );
+
+                      RegExp pattern = RegExp(
+                        r'^[^/\s]+\.\S{2,}$',
+                        caseSensitive: false,
+                        multiLine: false,
+                      );
+
+                      if (!pattern.hasMatch(strWebUrlCtrl)) {
+                        dicService.showCheckUrl();
+                      } else if (strCaptionCtrl.isEmpty) {
+                        dicService.showCheckItems("사이트명");
+                      } else if (strWebUrlCtrl.isEmpty) {
+                        dicService.showCheckItems("사이트URL");
+                      } else if (chkData.isNotEmpty) {
+                        dicService.showExistStatus(strCaptionCtrl);
+                      } else {
+                        // 새로운 웹사이트 최초 등록
+                        await SQLWebHelper.editWebInfo(
+                          strWebUrlCtrl,
+                          strTagCtrl,
+                          widget.captionItem["id"],
+                        );
+                        captionController.text = "";
+
+                        Navigator.pop(context);
+                        if (widget.onItemSelected != null) {
+                          widget
+                              .onItemSelected!(); // onItemSelected가 null이 아닌 경우에만 콜백 함수를 호출합니다.
+                        }
+                      }
+                    },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SvgPicture.asset(
+                          'assets/icons/done-svgrepo-com.svg', // 저장 아이콘 파일 경로
+                          width: 24,
+                          height: 24,
+                          color: Colors.white,
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          '수정',
+                          style: TextStyle(fontSize: 18, color: Colors.white),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-              ),
-              Container(
-                margin: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                width: MediaQuery.of(context).size.width - 32,
-                height: 50,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blueGrey,
-                    alignment: Alignment.centerLeft,
-                    padding:
-                        EdgeInsets.fromLTRB(10, 0, 0, 0), // 버튼 내부의 정렬을 중앙으로 설정
-                  ),
-                  onPressed: () async {
-                    String strCaptionCtrl = captionController.text;
-                    String strWebUrlCtrl = webUrlController.text;
-                    String? strTagCtrl = "";
-
-                    switch (strSeletedClass) {
-                      case "매일":
-                        strTagCtrl = "d";
-                        break;
-                      case "매주":
-                        strTagCtrl = "w";
-                        break;
-                      case "매월":
-                        strTagCtrl = "m";
-                        break;
-                      case "게임":
-                        strTagCtrl = "g";
-                        break;
-                      default:
-                        strTagCtrl = "e";
-                        break;
-                    }
-
-                    final chkData =
-                        await SQLWebHelper.chkCaption(strWebUrlCtrl);
-
-                    RegExp pattern = RegExp(
-                      r'^[^/\s]+\.\S{2,}$',
-                      caseSensitive: false,
-                      multiLine: false,
-                    );
-
-                    if (!pattern.hasMatch(strWebUrlCtrl)) {
-                      dicService.showCheckUrl();
-                    } else if (strCaptionCtrl.isEmpty) {
-                      dicService.showCheckItems("사이트명");
-                    } else if (strWebUrlCtrl.isEmpty) {
-                      dicService.showCheckItems("사이트URL");
-                    } else if (chkData.isNotEmpty) {
-                      dicService.showExistStatus(strCaptionCtrl);
-                    } else {
-                      // 새로운 웹사이트 최초 등록
-                      await SQLWebHelper.editWebInfo(
-                          strWebUrlCtrl, strTagCtrl, widget.captionItem["id"]);
-                      captionController.text = "";
-
+                Container(
+                  margin: EdgeInsets.symmetric(horizontal: 16),
+                  width: MediaQuery.of(context).size.width - 32,
+                  height: 50,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blueGrey,
+                      alignment: Alignment.centerLeft,
+                      padding: EdgeInsets.fromLTRB(
+                        10,
+                        0,
+                        0,
+                        0,
+                      ), // 버튼 내부의 정렬을 중앙으로 설정
+                    ),
+                    onPressed: () async {
+                      await SQLWebHelper.deleteWebUrl(widget.captionItem["id"]);
                       Navigator.pop(context);
                       if (widget.onItemSelected != null) {
                         widget
                             .onItemSelected!(); // onItemSelected가 null이 아닌 경우에만 콜백 함수를 호출합니다.
                       }
-                    }
-                  },
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      SvgPicture.asset(
-                        'assets/icons/done-svgrepo-com.svg', // 저장 아이콘 파일 경로
-                        width: 24,
-                        height: 24,
-                        color: Colors.white,
-                      ),
-                      SizedBox(width: 8),
-                      Text(
-                        '수정',
-                        style: TextStyle(
-                          fontSize: 18,
+                    },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SvgPicture.asset(
+                          'assets/icons/done-svgrepo-com.svg', // 저장 아이콘 파일 경로
+                          width: 24,
+                          height: 24,
                           color: Colors.white,
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Container(
-                margin: EdgeInsets.symmetric(horizontal: 16),
-                width: MediaQuery.of(context).size.width - 32,
-                height: 50,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blueGrey,
-                    alignment: Alignment.centerLeft,
-                    padding:
-                        EdgeInsets.fromLTRB(10, 0, 0, 0), // 버튼 내부의 정렬을 중앙으로 설정
-                  ),
-                  onPressed: () async {
-                    await SQLWebHelper.deleteWebUrl(widget.captionItem["id"]);
-                    Navigator.pop(context);
-                    if (widget.onItemSelected != null) {
-                      widget
-                          .onItemSelected!(); // onItemSelected가 null이 아닌 경우에만 콜백 함수를 호출합니다.
-                    }
-                  },
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      SvgPicture.asset(
-                        'assets/icons/done-svgrepo-com.svg', // 저장 아이콘 파일 경로
-                        width: 24,
-                        height: 24,
-                        color: Colors.white,
-                      ),
-                      SizedBox(width: 8),
-                      Text(
-                        '삭제',
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Colors.white,
+                        SizedBox(width: 8),
+                        Text(
+                          '삭제',
+                          style: TextStyle(fontSize: 18, color: Colors.white),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ]),
+              ],
+            ),
           ),
         );
       },

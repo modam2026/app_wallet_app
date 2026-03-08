@@ -43,7 +43,7 @@ void main() {
             return Future<void>.value();
           default:
             assert(false);
-            return null;
+            return;
         }
       });
     });
@@ -51,7 +51,7 @@ void main() {
     test('load show rewarded interstitial android', () async {
       debugDefaultTargetPlatformOverride = TargetPlatform.android;
       RewardedInterstitialAd? rewardedInterstitial;
-      AdRequest request = AdRequest();
+      AdRequest request = const AdRequest();
       await RewardedInterstitialAd.load(
         adUnitId: 'test-ad-unit',
         request: request,
@@ -59,7 +59,7 @@ void main() {
             onAdLoaded: (ad) {
               rewardedInterstitial = ad;
             },
-            onAdFailedToLoad: (error) => null),
+            onAdFailedToLoad: (error) {}),
       );
 
       RewardedInterstitialAd createdAd =
@@ -79,8 +79,7 @@ void main() {
       expect(rewardedInterstitial, createdAd);
 
       log.clear();
-      await rewardedInterstitial!
-          .show(onUserEarnedReward: (ad, reward) => null);
+      await rewardedInterstitial!.show(onUserEarnedReward: (ad, reward) {});
       expect(log, <Matcher>[
         isMethodCall('showAdWithoutView', arguments: <dynamic, dynamic>{
           'adId': 0,
@@ -150,7 +149,7 @@ void main() {
     test('load show rewarded interstitial ios', () async {
       debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
       RewardedInterstitialAd? rewardedInterstitial;
-      AdRequest request = AdRequest();
+      AdRequest request = const AdRequest();
       await RewardedInterstitialAd.load(
         adUnitId: 'test-ad-unit',
         request: request,
@@ -158,7 +157,7 @@ void main() {
             onAdLoaded: (ad) {
               rewardedInterstitial = ad;
             },
-            onAdFailedToLoad: (error) => null),
+            onAdFailedToLoad: (error) {}),
       );
 
       RewardedInterstitialAd createdAd =
@@ -178,8 +177,7 @@ void main() {
       expect(rewardedInterstitial, createdAd);
 
       log.clear();
-      await rewardedInterstitial!
-          .show(onUserEarnedReward: (ad, reward) => null);
+      await rewardedInterstitial!.show(onUserEarnedReward: (ad, reward) {});
       expect(log, <Matcher>[
         isMethodCall('showAdWithoutView', arguments: <dynamic, dynamic>{
           'adId': 0,
@@ -259,7 +257,7 @@ void main() {
 
     test('load show rewarded interstitial with $AdManagerAdRequest', () async {
       RewardedInterstitialAd? rewardedInterstitial;
-      AdManagerAdRequest request = AdManagerAdRequest();
+      AdManagerAdRequest request = const AdManagerAdRequest();
       await RewardedInterstitialAd.loadWithAdManagerAdRequest(
         adUnitId: 'test-ad-unit',
         adManagerRequest: request,
@@ -267,7 +265,7 @@ void main() {
             onAdLoaded: (ad) {
               rewardedInterstitial = ad;
             },
-            onAdFailedToLoad: (error) => null),
+            onAdFailedToLoad: (error) {}),
       );
 
       RewardedInterstitialAd createdAd =
@@ -286,8 +284,7 @@ void main() {
       expect(instanceManager.adFor(0), isNotNull);
 
       log.clear();
-      await rewardedInterstitial!
-          .show(onUserEarnedReward: (ad, reward) => null);
+      await rewardedInterstitial!.show(onUserEarnedReward: (ad, reward) {});
       expect(log, <Matcher>[
         isMethodCall('showAdWithoutView', arguments: <dynamic, dynamic>{
           'adId': 0,
@@ -297,12 +294,12 @@ void main() {
 
     test('onAdFailedToLoad rewarded interstitial', () async {
       final Completer<LoadAdError> resultsCompleter = Completer<LoadAdError>();
-      final AdRequest request = AdRequest();
+      const AdRequest request = AdRequest();
       await RewardedInterstitialAd.load(
         adUnitId: 'test-ad-unit',
         request: request,
         rewardedInterstitialAdLoadCallback: RewardedInterstitialAdLoadCallback(
-            onAdLoaded: (ad) => null,
+            onAdLoaded: (ad) {},
             onAdFailedToLoad: (error) => resultsCompleter.complete(error)),
       );
 
@@ -384,12 +381,12 @@ void main() {
       RewardedInterstitialAd? rewardedInterstitial;
       await RewardedInterstitialAd.load(
         adUnitId: 'test-ad-unit',
-        request: AdRequest(),
+        request: const AdRequest(),
         rewardedInterstitialAdLoadCallback: RewardedInterstitialAdLoadCallback(
             onAdLoaded: (ad) {
               rewardedInterstitial = ad;
             },
-            onAdFailedToLoad: (error) => null),
+            onAdFailedToLoad: (error) {}),
       );
 
       RewardedInterstitialAd createdAd =
@@ -425,12 +422,12 @@ void main() {
       final adLoadCompleter = Completer<RewardedInterstitialAd>();
       await RewardedInterstitialAd.load(
         adUnitId: 'test-ad-unit',
-        request: AdRequest(),
+        request: const AdRequest(),
         rewardedInterstitialAdLoadCallback: RewardedInterstitialAdLoadCallback(
             onAdLoaded: (ad) {
               adLoadCompleter.complete(ad);
             },
-            onAdFailedToLoad: (_) => null),
+            onAdFailedToLoad: (_) {}),
       );
 
       await TestUtil.sendAdEvent(0, 'onAdLoaded', instanceManager);

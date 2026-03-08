@@ -25,9 +25,9 @@ class DeviceApps {
   /// [onlyAppsWithLaunchIntent] will only list applications when an entrypoint.
   /// It is similar to what a launcher will display
   static Future<List<Application>> getInstalledApplications({
-    bool includeSystemApps: false,
-    bool includeAppIcons: false,
-    bool onlyAppsWithLaunchIntent: false,
+    bool includeSystemApps = false,
+    bool includeAppIcons = false,
+    bool onlyAppsWithLaunchIntent = false,
   }) async {
     try {
       final Object apps =

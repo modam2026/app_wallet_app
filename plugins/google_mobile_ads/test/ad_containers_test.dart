@@ -55,7 +55,7 @@ void main() {
             return Future<dynamic>.value(AdSize.banner);
           default:
             assert(false);
-            return null;
+            return;
         }
       });
     });
@@ -105,7 +105,7 @@ void main() {
 
     test('load rewarded ad and set immersive mode and ssv', () async {
       RewardedAd? rewarded;
-      AdRequest request = AdRequest();
+      AdRequest request = const AdRequest();
       await RewardedAd.load(
         adUnitId: 'test-ad-unit',
         request: request,
@@ -113,7 +113,7 @@ void main() {
             onAdLoaded: (ad) {
               rewarded = ad;
             },
-            onAdFailedToLoad: (error) => null),
+            onAdFailedToLoad: (error) {}),
       );
 
       RewardedAd createdAd = instanceManager.adFor(0) as RewardedAd;
@@ -153,12 +153,12 @@ void main() {
       InterstitialAd? interstitial;
       await InterstitialAd.load(
         adUnitId: 'test-ad-unit',
-        request: AdRequest(),
+        request: const AdRequest(),
         adLoadCallback: InterstitialAdLoadCallback(
             onAdLoaded: (ad) {
               interstitial = ad;
             },
-            onAdFailedToLoad: (error) => null),
+            onAdFailedToLoad: (error) {}),
       );
 
       InterstitialAd createdAd = (instanceManager.adFor(0) as InterstitialAd);
@@ -186,12 +186,12 @@ void main() {
       AdManagerInterstitialAd? interstitial;
       await AdManagerInterstitialAd.load(
         adUnitId: 'test-id',
-        request: AdManagerAdRequest(),
+        request: const AdManagerAdRequest(),
         adLoadCallback: AdManagerInterstitialAdLoadCallback(
             onAdLoaded: (ad) {
               interstitial = ad;
             },
-            onAdFailedToLoad: (error) => null),
+            onAdFailedToLoad: (error) {}),
       );
 
       AdManagerInterstitialAd createdAd =
@@ -235,7 +235,7 @@ void main() {
         factoryId: '0',
         customOptions: options,
         listener: NativeAdListener(),
-        request: AdRequest(),
+        request: const AdRequest(),
         nativeAdOptions: nativeAdOptions,
       );
 
@@ -263,7 +263,7 @@ void main() {
         factoryId: '0',
         customOptions: options,
         listener: NativeAdListener(),
-        adManagerRequest: AdManagerAdRequest(),
+        adManagerRequest: const AdManagerAdRequest(),
         nativeTemplateStyle:
             NativeTemplateStyle(templateType: TemplateType.medium),
       );
@@ -291,7 +291,7 @@ void main() {
         adUnitId: 'test-ad-unit',
         factoryId: '0',
         listener: NativeAdListener(),
-        request: AdRequest(),
+        request: const AdRequest(),
       );
 
       await native.load();
@@ -303,8 +303,8 @@ void main() {
               child: Column(
                 key: UniqueKey(),
                 children: [
-                  SizedBox.fromSize(size: Size(200, 1000)),
-                  Container(
+                  SizedBox.fromSize(size: const Size(200, 1000)),
+                  SizedBox(
                     height: 200,
                     width: 200,
                     child: AdWidget(ad: native),
@@ -333,7 +333,7 @@ void main() {
         adUnitId: 'test-ad-unit',
         factoryId: '0',
         listener: NativeAdListener(),
-        request: AdRequest(),
+        request: const AdRequest(),
       );
       await ad.load();
 
@@ -346,8 +346,8 @@ void main() {
               child: Column(
                 key: UniqueKey(),
                 children: [
-                  SizedBox.fromSize(size: Size(200, 1000)),
-                  Container(
+                  SizedBox.fromSize(size: const Size(200, 1000)),
+                  SizedBox(
                     height: 200,
                     width: 200,
                     child: AdWidget(ad: ad),
@@ -362,7 +362,7 @@ void main() {
 
       // On initial render, VisibilityRender should be in the UI
       final visibilityDetectorWidget =
-          tester.widget(find.byKey(Key('android-platform-view-0')));
+          tester.widget(find.byKey(const Key('android-platform-view-0')));
       expect(visibilityDetectorWidget, isNotNull);
       expect(visibilityDetectorWidget, isA<VisibilityDetector>());
       final platformViewLinks =
@@ -370,7 +370,8 @@ void main() {
       expect(platformViewLinks.isEmpty, true);
 
       // Drag the ad widget into view
-      await tester.drag(find.byType(SingleChildScrollView), Offset(0.0, -1000));
+      await tester.drag(
+          find.byType(SingleChildScrollView), const Offset(0.0, -1000));
       await tester.pumpAndSettle();
 
       // PlatformViewLink should now be present instead of VisibilityDetector
@@ -393,7 +394,7 @@ void main() {
         adUnitId: 'test-ad-unit',
         factoryId: '0',
         listener: NativeAdListener(),
-        request: AdRequest(),
+        request: const AdRequest(),
       );
       await ad.load();
 
@@ -406,8 +407,8 @@ void main() {
               child: Column(
                 key: UniqueKey(),
                 children: [
-                  SizedBox.fromSize(size: Size(200, 1000)),
-                  Container(
+                  SizedBox.fromSize(size: const Size(200, 1000)),
+                  SizedBox(
                     height: 200,
                     width: 200,
                     child: AdWidget(ad: ad),
@@ -439,7 +440,7 @@ void main() {
         adUnitId: 'test-ad-unit',
         factoryId: '0',
         listener: NativeAdListener(),
-        request: AdRequest(),
+        request: const AdRequest(),
       );
 
       try {
@@ -475,7 +476,7 @@ void main() {
         adUnitId: 'test-ad-unit',
         factoryId: '0',
         listener: NativeAdListener(),
-        request: AdRequest(),
+        request: const AdRequest(),
       );
 
       await ad.load();
@@ -516,7 +517,7 @@ void main() {
         adUnitId: 'test-ad-unit',
         factoryId: '0',
         listener: NativeAdListener(),
-        request: AdRequest(),
+        request: const AdRequest(),
       );
 
       await ad.load();
@@ -560,7 +561,7 @@ void main() {
         adUnitId: 'test-ad-unit',
         factoryId: '0',
         listener: NativeAdListener(),
-        request: AdRequest(),
+        request: const AdRequest(),
       );
       await ad.load();
       final AdWidget widget = AdWidget(ad: ad);
@@ -595,7 +596,7 @@ void main() {
 
     test('load show rewarded', () async {
       RewardedAd? rewarded;
-      AdRequest request = AdRequest();
+      AdRequest request = const AdRequest();
       await RewardedAd.load(
         adUnitId: 'test-ad-unit',
         request: request,
@@ -603,7 +604,7 @@ void main() {
             onAdLoaded: (ad) {
               rewarded = ad;
             },
-            onAdFailedToLoad: (error) => null),
+            onAdFailedToLoad: (error) {}),
       );
 
       RewardedAd createdAd = instanceManager.adFor(0) as RewardedAd;
@@ -622,7 +623,7 @@ void main() {
       expect(rewarded, createdAd);
 
       log.clear();
-      await rewarded!.show(onUserEarnedReward: (ad, reward) => null);
+      await rewarded!.show(onUserEarnedReward: (ad, reward) {});
       expect(log, <Matcher>[
         isMethodCall('showAdWithoutView', arguments: <dynamic, dynamic>{
           'adId': 0,
@@ -632,7 +633,7 @@ void main() {
 
     test('load show rewarded with $AdManagerAdRequest', () async {
       RewardedAd? rewarded;
-      AdManagerAdRequest request = AdManagerAdRequest();
+      AdManagerAdRequest request = const AdManagerAdRequest();
       await RewardedAd.loadWithAdManagerAdRequest(
         adUnitId: 'test-ad-unit',
         adManagerRequest: request,
@@ -640,7 +641,7 @@ void main() {
             onAdLoaded: (ad) {
               rewarded = ad;
             },
-            onAdFailedToLoad: (error) => null),
+            onAdFailedToLoad: (error) {}),
       );
 
       RewardedAd createdAd = instanceManager.adFor(0) as RewardedAd;
@@ -658,7 +659,7 @@ void main() {
       expect(instanceManager.adFor(0), isNotNull);
 
       log.clear();
-      await rewarded!.show(onUserEarnedReward: (ad, reward) => null);
+      await rewarded!.show(onUserEarnedReward: (ad, reward) {});
       expect(log, <Matcher>[
         isMethodCall('showAdWithoutView', arguments: <dynamic, dynamic>{
           'adId': 0,
@@ -670,12 +671,12 @@ void main() {
       InterstitialAd? interstitial;
       await InterstitialAd.load(
         adUnitId: 'test-ad-unit',
-        request: AdRequest(),
+        request: const AdRequest(),
         adLoadCallback: InterstitialAdLoadCallback(
             onAdLoaded: (ad) {
               interstitial = ad;
             },
-            onAdFailedToLoad: (error) => null),
+            onAdFailedToLoad: (error) {}),
       );
 
       InterstitialAd createdAd = (instanceManager.adFor(0) as InterstitialAd);
@@ -704,12 +705,12 @@ void main() {
       AdManagerInterstitialAd? interstitial;
       await AdManagerInterstitialAd.load(
         adUnitId: 'test-id',
-        request: AdManagerAdRequest(),
+        request: const AdManagerAdRequest(),
         adLoadCallback: AdManagerInterstitialAdLoadCallback(
             onAdLoaded: (ad) {
               interstitial = ad;
             },
-            onAdFailedToLoad: (error) => null),
+            onAdFailedToLoad: (error) {}),
       );
 
       AdManagerInterstitialAd createdAd =
@@ -738,12 +739,12 @@ void main() {
 
     test('onAdFailedToLoad interstitial', () async {
       final Completer<LoadAdError> resultsCompleter = Completer<LoadAdError>();
-      final AdRequest request = AdRequest();
+      const AdRequest request = AdRequest();
       await InterstitialAd.load(
         adUnitId: 'test-ad-unit',
         request: request,
         adLoadCallback: InterstitialAdLoadCallback(
-            onAdLoaded: (ad) => null,
+            onAdLoaded: (ad) {},
             onAdFailedToLoad: (error) => resultsCompleter.complete(error)),
       );
 
@@ -819,12 +820,12 @@ void main() {
 
     test('onAdFailedToLoad ad manager interstitial', () async {
       final Completer<LoadAdError> resultsCompleter = Completer<LoadAdError>();
-      final AdManagerAdRequest request = AdManagerAdRequest();
+      const AdManagerAdRequest request = AdManagerAdRequest();
       await AdManagerInterstitialAd.load(
         adUnitId: 'test-ad-unit',
         request: request,
         adLoadCallback: AdManagerInterstitialAdLoadCallback(
-            onAdLoaded: (ad) => null,
+            onAdLoaded: (ad) {},
             onAdFailedToLoad: (error) => resultsCompleter.complete(error)),
       );
 
@@ -901,12 +902,12 @@ void main() {
 
     test('onAdFailedToLoad rewarded', () async {
       final Completer<LoadAdError> resultsCompleter = Completer<LoadAdError>();
-      final AdRequest request = AdRequest();
+      const AdRequest request = AdRequest();
       await RewardedAd.load(
         adUnitId: 'test-ad-unit',
         request: request,
         rewardedAdLoadCallback: RewardedAdLoadCallback(
-            onAdLoaded: (ad) => null,
+            onAdLoaded: (ad) {},
             onAdFailedToLoad: (error) => resultsCompleter.complete(error)),
       );
 
@@ -989,12 +990,12 @@ void main() {
         factoryId: 'testId',
         listener: NativeAdListener(
             onAdImpression: (Ad ad) => adEventCompleter.complete(ad)),
-        request: AdRequest(),
+        request: const AdRequest(),
       );
 
       await native.load();
 
-      final MethodCall methodCall = MethodCall('onAdEvent',
+      const MethodCall methodCall = MethodCall('onAdEvent',
           <dynamic, dynamic>{'adId': 0, 'eventName': 'onAdImpression'});
 
       final ByteData data =
@@ -1010,10 +1011,10 @@ void main() {
     });
 
     test('AdapterResponseInfo encoding', () async {
-      var testAdapterResponseInfo = (adId) async {
+      Future<void> testAdapterResponseInfo(adId) async {
         final Completer<Ad> loadCompleter = Completer<Ad>();
 
-        AdRequest request = AdRequest();
+        AdRequest request = const AdRequest();
         await RewardedAd.load(
             adUnitId: 'test-ad-unit',
             request: request,
@@ -1021,7 +1022,7 @@ void main() {
                 onAdLoaded: (ad) {
                   loadCompleter.complete(ad);
                 },
-                onAdFailedToLoad: (error) => null));
+                onAdFailedToLoad: (error) {}));
 
         AdapterResponseInfo adapterResponseInfo = AdapterResponseInfo(
           adapterClassName: 'adapter-name',
@@ -1088,7 +1089,8 @@ void main() {
         expect(loadedResponse.adSourceId, 'adSourceId');
         expect(loadedResponse.adSourceInstanceName, 'adSourceInstanceName');
         expect(loadedResponse.adSourceInstanceId, 'adSourceInstanceId');
-      };
+      }
+
       debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
       await testAdapterResponseInfo(0);
 
@@ -1103,12 +1105,12 @@ void main() {
       RewardedAd? rewarded;
       await RewardedAd.load(
           adUnitId: 'test-ad-unit',
-          request: AdRequest(),
+          request: const AdRequest(),
           rewardedAdLoadCallback: RewardedAdLoadCallback(
               onAdLoaded: (ad) {
                 rewarded = ad;
               },
-              onAdFailedToLoad: (error) => null));
+              onAdFailedToLoad: (error) {}));
 
       RewardedAd createdAd = instanceManager.adFor(0) as RewardedAd;
       createdAd.rewardedAdLoadCallback.onAdLoaded(createdAd);
@@ -1149,13 +1151,13 @@ void main() {
               resultCompleter
                   .complete(<Object>[ad, value, precision, currencyCode]),
         ),
-        request: AdRequest(),
+        request: const AdRequest(),
       );
 
       await banner.load();
 
       // Check precision type: unknown
-      MethodCall methodCall = MethodCall('onAdEvent', <dynamic, dynamic>{
+      MethodCall methodCall = const MethodCall('onAdEvent', <dynamic, dynamic>{
         'adId': 0,
         'eventName': 'onPaidEvent',
         'valueMicros': 1.2345,
@@ -1180,7 +1182,7 @@ void main() {
 
       // Unknown precision outside 0-3 range.
       resultCompleter = Completer<List<dynamic>>();
-      methodCall = MethodCall('onAdEvent', <dynamic, dynamic>{
+      methodCall = const MethodCall('onAdEvent', <dynamic, dynamic>{
         'adId': 0,
         'eventName': 'onPaidEvent',
         'valueMicros': 1.2345,
@@ -1199,7 +1201,7 @@ void main() {
       // Check precision type: estimated.
       // Also check that callback is invoked successfully for int valueMicros.
       resultCompleter = Completer<List<dynamic>>();
-      methodCall = MethodCall('onAdEvent', <dynamic, dynamic>{
+      methodCall = const MethodCall('onAdEvent', <dynamic, dynamic>{
         'adId': 0,
         'eventName': 'onPaidEvent',
         'valueMicros': 12345, // int
@@ -1218,7 +1220,7 @@ void main() {
 
       // Check precision type: publisherProvided.
       resultCompleter = Completer<List<dynamic>>();
-      methodCall = MethodCall('onAdEvent', <dynamic, dynamic>{
+      methodCall = const MethodCall('onAdEvent', <dynamic, dynamic>{
         'adId': 0,
         'eventName': 'onPaidEvent',
         'valueMicros': 1.2345,
@@ -1236,7 +1238,7 @@ void main() {
 
       // Check precision type: precise.
       resultCompleter = Completer<List<dynamic>>();
-      methodCall = MethodCall('onAdEvent', <dynamic, dynamic>{
+      methodCall = const MethodCall('onAdEvent', <dynamic, dynamic>{
         'adId': 0,
         'eventName': 'onPaidEvent',
         'valueMicros': 1.2345,
@@ -1261,7 +1263,7 @@ void main() {
     test('encode/decode AdRequest Android', () async {
       debugDefaultTargetPlatformOverride = TargetPlatform.android;
 
-      final AdRequest adRequest = AdRequest(
+      const AdRequest adRequest = AdRequest(
         keywords: <String>['1', '2', '3'],
         contentUrl: 'contentUrl',
         nonPersonalizedAds: false,
@@ -1271,7 +1273,7 @@ void main() {
         extras: {'key': 'value'},
       );
 
-      final AdRequest decodedRequest = AdRequest(
+      const AdRequest decodedRequest = AdRequest(
         keywords: <String>['1', '2', '3'],
         contentUrl: 'contentUrl',
         nonPersonalizedAds: false,
@@ -1287,7 +1289,7 @@ void main() {
     test('encode/decode AdRequest iOS', () async {
       debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
 
-      final AdRequest adRequest = AdRequest(
+      const AdRequest adRequest = AdRequest(
         keywords: <String>['1', '2', '3'],
         contentUrl: 'contentUrl',
         nonPersonalizedAds: false,
@@ -1308,7 +1310,7 @@ void main() {
     });
 
     test('encode/decode $LoadAdError', () async {
-      final ResponseInfo responseInfo = ResponseInfo(
+      const ResponseInfo responseInfo = ResponseInfo(
         responseId: 'id',
         mediationAdapterClassName: 'class',
         adapterResponses: null,
@@ -1426,7 +1428,7 @@ void main() {
 
     test('encode/decode $FluidAdSize', () async {
       debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
-      final ByteData byteData = codec.encodeMessage(FluidAdSize())!;
+      final ByteData byteData = codec.encodeMessage(const FluidAdSize())!;
 
       final FluidAdSize result = codec.decodeMessage(byteData);
       expect(result.width, -3);
@@ -1437,7 +1439,7 @@ void main() {
       expectedBuffer.putUint8(130);
 
       final WriteBuffer actualBuffer = WriteBuffer();
-      codec.writeAdSize(actualBuffer, FluidAdSize());
+      codec.writeAdSize(actualBuffer, const FluidAdSize());
       expect(
         expectedBuffer.done().buffer.asInt8List(),
         actualBuffer.done().buffer.asInt8List(),
@@ -1446,7 +1448,7 @@ void main() {
 
     test('encode/decode $AdManagerAdRequest Android', () async {
       debugDefaultTargetPlatformOverride = TargetPlatform.android;
-      final AdManagerAdRequest request = AdManagerAdRequest(
+      const AdManagerAdRequest request = AdManagerAdRequest(
         keywords: <String>['who'],
         contentUrl: 'dat',
         customTargeting: <String, String>{'boy': 'who'},
@@ -1462,7 +1464,7 @@ void main() {
       );
       final ByteData byteData = codec.encodeMessage(request)!;
 
-      final AdManagerAdRequest decodedRequest = AdManagerAdRequest(
+      const AdManagerAdRequest decodedRequest = AdManagerAdRequest(
         keywords: <String>['who'],
         contentUrl: 'dat',
         customTargeting: <String, String>{'boy': 'who'},
@@ -1485,7 +1487,7 @@ void main() {
     test('encode/decode $AdManagerAdRequest iOS', () async {
       debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
 
-      final AdManagerAdRequest request = AdManagerAdRequest(
+      const AdManagerAdRequest request = AdManagerAdRequest(
         keywords: <String>['who'],
         contentUrl: 'dat',
         customTargeting: <String, String>{'boy': 'who'},
@@ -1514,7 +1516,7 @@ void main() {
     });
 
     test('ad click native', () async {
-      var testNativeClick = (eventName, adId) async {
+      Future<void> testNativeClick(eventName, adId) async {
         final Completer<Ad> adClickCompleter = Completer<Ad>();
 
         final NativeAd native = NativeAd(
@@ -1522,7 +1524,7 @@ void main() {
           factoryId: 'testId',
           listener: NativeAdListener(
               onAdClicked: (ad) => adClickCompleter.complete(ad)),
-          request: AdRequest(),
+          request: const AdRequest(),
         );
 
         await native.load();
@@ -1540,7 +1542,7 @@ void main() {
         );
 
         expect(adClickCompleter.future, completion(native));
-      };
+      }
 
       debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
       await testNativeClick('adDidRecordClick', 0);
@@ -1550,12 +1552,12 @@ void main() {
     });
 
     test('ad click rewarded', () async {
-      var testRewardedClick = (eventName, adId) async {
+      Future<void> testRewardedClick(eventName, adId) async {
         final Completer<Ad> adClickCompleter = Completer<Ad>();
 
         // Load an ad
         RewardedAd? rewarded;
-        AdRequest request = AdRequest();
+        AdRequest request = const AdRequest();
         await RewardedAd.load(
             adUnitId: 'test-ad-unit',
             request: request,
@@ -1565,7 +1567,7 @@ void main() {
                   ad.fullScreenContentCallback = FullScreenContentCallback(
                       onAdClicked: (ad) => adClickCompleter.complete(ad));
                 },
-                onAdFailedToLoad: (error) => null));
+                onAdFailedToLoad: (error) {}));
 
         MethodCall methodCall = MethodCall('onAdEvent', <dynamic, dynamic>{
           'adId': adId,
@@ -1593,7 +1595,7 @@ void main() {
           (ByteData? data) {},
         );
         expect(adClickCompleter.future, completion(rewarded!));
-      };
+      }
 
       debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
       await testRewardedClick('adDidRecordClick', 0);
@@ -1603,12 +1605,12 @@ void main() {
     });
 
     test('ad click interstitial', () async {
-      var testClick = (eventName, adId) async {
+      Future<void> testClick(eventName, adId) async {
         final Completer<Ad> adClickCompleter = Completer<Ad>();
 
         // Load an ad
         InterstitialAd? interstitialAd;
-        AdRequest request = AdRequest();
+        AdRequest request = const AdRequest();
         await InterstitialAd.load(
           adUnitId: 'test-ad-unit',
           request: request,
@@ -1618,7 +1620,7 @@ void main() {
                 ad.fullScreenContentCallback = FullScreenContentCallback(
                     onAdClicked: (ad) => adClickCompleter.complete(ad));
               },
-              onAdFailedToLoad: (error) => null),
+              onAdFailedToLoad: (error) {}),
         );
 
         MethodCall methodCall = MethodCall('onAdEvent', <dynamic, dynamic>{
@@ -1647,7 +1649,7 @@ void main() {
           (ByteData? data) {},
         );
         expect(adClickCompleter.future, completion(interstitialAd!));
-      };
+      }
 
       debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
       await testClick('adDidRecordClick', 0);
@@ -1657,12 +1659,12 @@ void main() {
     });
 
     test('ad click interstitial', () async {
-      var testClick = (eventName, adId) async {
+      Future<void> testClick(eventName, adId) async {
         final Completer<Ad> adClickCompleter = Completer<Ad>();
 
         // Load an ad
         InterstitialAd? interstitialAd;
-        AdRequest request = AdRequest();
+        AdRequest request = const AdRequest();
         await InterstitialAd.load(
           adUnitId: 'test-ad-unit',
           request: request,
@@ -1672,7 +1674,7 @@ void main() {
                 ad.fullScreenContentCallback = FullScreenContentCallback(
                     onAdClicked: (ad) => adClickCompleter.complete(ad));
               },
-              onAdFailedToLoad: (error) => null),
+              onAdFailedToLoad: (error) {}),
         );
 
         MethodCall methodCall = MethodCall('onAdEvent', <dynamic, dynamic>{
@@ -1701,7 +1703,7 @@ void main() {
           (ByteData? data) {},
         );
         expect(adClickCompleter.future, completion(interstitialAd!));
-      };
+      }
 
       debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
       await testClick('adDidRecordClick', 0);

@@ -29,7 +29,7 @@ class _PageMyUserDefState extends State<PageMyUserDef> {
     '구글&폰앱',
     '사용자',
     '금융',
-    '기관'
+    '기관',
   ];
 
   CommonHelper commonHelper = CommonHelper.instance;
@@ -43,8 +43,10 @@ class _PageMyUserDefState extends State<PageMyUserDef> {
 
     // 전체 앱 캐시가 비어 있으면 한 번 로딩해 둔다.
     if (commonHelper.appDataWithAll.isEmpty) {
-      commonHelper.appDataWithAll =
-          await commonHelper.getCachedApplications(kind, "");
+      commonHelper.appDataWithAll = await commonHelper.getCachedApplications(
+        kind,
+        "",
+      );
     }
 
     // DB에 "나의 앱 리스트" 데이터가 하나도 없을 때만 기본 앱을 최초 한 번 등록
@@ -52,19 +54,21 @@ class _PageMyUserDefState extends State<PageMyUserDef> {
     if (!hasMyApps) {
       await SQLHelper.addMyIntrnAppInfo("카카오톡", "com.kakao.talk", "OPN");
       await SQLHelper.addMyIntrnAppInfo(
-          "YouTube", "com.google.android.youtube", "OPN");
-      await SQLHelper.addMyIntrnAppInfo(
-          "네이버지도", "com.nhn.android.nmap", "OPN");
+        "YouTube",
+        "com.google.android.youtube",
+        "OPN",
+      );
+      await SQLHelper.addMyIntrnAppInfo("네이버지도", "com.nhn.android.nmap", "OPN");
     }
 
-    final app_data = await SQLHelper.getMyAppsFromDB();
+    final appData = await SQLHelper.getMyAppsFromDB();
 
-    for (var _item in app_data) {
+    for (var _item in appData) {
       var app = commonHelper.appDataWithAll
           .where((inApp) => inApp["package_name"] == _item["package_name"])
           .toList();
 
-      if (app.length > 0) {
+      if (app.isNotEmpty) {
         Map<String, dynamic> rsltApp = app[0];
         rsltApp["app_num"] = _item["app_num"];
         rsltApp["app_order"] = _item["app_order"];
@@ -85,8 +89,9 @@ class _PageMyUserDefState extends State<PageMyUserDef> {
       // If 'is_fixed_app' values are equal, compare 'app_use_period'
       if (isFixedAppComparison == 0) {
         // Compare 'app_use_period'
-        int usePeriodComparison =
-            a['app_use_period'].compareTo(b['app_use_period']);
+        int usePeriodComparison = a['app_use_period'].compareTo(
+          b['app_use_period'],
+        );
 
         // If 'app_use_period' values are equal, compare 'num'
         if (usePeriodComparison == 0) {
@@ -114,7 +119,9 @@ class _PageMyUserDefState extends State<PageMyUserDef> {
   }
 
   void _showConfirmationDialog(
-      CachedApplication appWithIcon, BuildContext context) {
+    CachedApplication appWithIcon,
+    BuildContext context,
+  ) {
     commonHelper.showConfirmationDialog(appWithIcon, context, () {
       setState(() {});
     });
@@ -149,19 +156,17 @@ class _PageMyUserDefState extends State<PageMyUserDef> {
               apps_search = List.from(apps);
 
               return ListView.separated(
-                separatorBuilder: (context, index) => Divider(
-                  color: Colors.grey[350],
-                  height: 1,
-                  thickness: 1.0,
-                ),
+                separatorBuilder: (context, index) =>
+                    Divider(color: Colors.grey[350], height: 1, thickness: 1.0),
                 itemCount: apps.length,
                 itemBuilder: (context, index) {
                   var app = apps[index];
-                  var appWithIcon = app as CachedApplication;
+                  var appWithIcon = app;
                   //search 창으로 아이콘앱을 넘기기
                   //ImageProvider icon = MemoryImage(appWithIcon.icon);
-                  ImageProvider icon =
-                      MemoryImage(base64Decode(appWithIcon.icon));
+                  ImageProvider icon = MemoryImage(
+                    base64Decode(appWithIcon.icon),
+                  );
                   bool isAppInDatabase = false;
                   if (appWithIcon.isOpening == "1") {
                     isAppInDatabase = true;
@@ -175,14 +180,17 @@ class _PageMyUserDefState extends State<PageMyUserDef> {
                     leading: Image(image: icon, width: 50, height: 50),
                     title: Text(appWithIcon.appName),
                     // subtitle: Text(appWithIcon.packageName),
-                    trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-                      IconButton(
-                        icon: Icon(CupertinoIcons.ellipsis_vertical),
-                        onPressed: () {
-                          _showConfirmationDialog(appWithIcon, context);
-                        },
-                      ),
-                    ]),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: Icon(CupertinoIcons.ellipsis_vertical),
+                          onPressed: () {
+                            _showConfirmationDialog(appWithIcon, context);
+                          },
+                        ),
+                      ],
+                    ),
                     onTap: () async {
                       await commonHelper.openApp(appWithIcon);
                       setState(() {});

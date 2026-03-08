@@ -6,7 +6,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 class DicService extends ChangeNotifier {
   var ansStatus = "L";
   bool callbackStatus = false;
-  Map<String, dynamic> dicCaptionItem = Map();
+  Map<String, dynamic> dicCaptionItem = {};
 
   //2023.06.04 추가
   List<Map<String, dynamic>> captions = [];
@@ -26,34 +26,38 @@ class DicService extends ChangeNotifier {
 
   void showExistStatus(String pCaption) {
     Fluttertoast.showToast(
-        msg: "$pCaption 은 존재합니다. \nURL을 확인하세요.",
-        toastLength: Toast.LENGTH_LONG,
-        fontSize: 14,
-        backgroundColor: Colors.green);
+      msg: "$pCaption 은 존재합니다. \nURL을 확인하세요.",
+      toastLength: Toast.LENGTH_LONG,
+      fontSize: 14,
+      backgroundColor: Colors.green,
+    );
   }
 
   void showCheckItems(String pItem) {
     Fluttertoast.showToast(
-        msg: "$pItem 항목이 비웠습니다.",
-        toastLength: Toast.LENGTH_LONG,
-        fontSize: 14,
-        backgroundColor: Colors.green);
+      msg: "$pItem 항목이 비웠습니다.",
+      toastLength: Toast.LENGTH_LONG,
+      fontSize: 14,
+      backgroundColor: Colors.green,
+    );
   }
 
   void showCheckUrl() {
     Fluttertoast.showToast(
-        msg: "입력된 값이 URL 형식이 아닙니다.",
-        toastLength: Toast.LENGTH_LONG,
-        fontSize: 14,
-        backgroundColor: Colors.green);
+      msg: "입력된 값이 URL 형식이 아닙니다.",
+      toastLength: Toast.LENGTH_LONG,
+      fontSize: 14,
+      backgroundColor: Colors.green,
+    );
   }
 
   void showChkClckTxt() {
     Fluttertoast.showToast(
-        msg: "직접입력불가, 분류버튼을 클릭하세요.",
-        toastLength: Toast.LENGTH_LONG,
-        fontSize: 14,
-        backgroundColor: Colors.green);
+      msg: "직접입력불가, 분류버튼을 클릭하세요.",
+      toastLength: Toast.LENGTH_LONG,
+      fontSize: 14,
+      backgroundColor: Colors.green,
+    );
   }
 
   void callNotifyListeners() {
