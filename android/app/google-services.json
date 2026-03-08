@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "221692932612",
+    "project_id": "appwalletapp",
+    "storage_bucket": "appwalletapp.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:221692932612:android:c161624e1aa5d03fc5bb51",
+        "android_client_info": {
+          "package_name": "com.modamtech.app_wallet_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "221692932612-edds5j334jbqe1k0qt32odklnm4l71r7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC0S-LQK8D2NhISKwXSIb3Ggv4F4GGMeHU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "221692932612-edds5j334jbqe1k0qt32odklnm4l71r7.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

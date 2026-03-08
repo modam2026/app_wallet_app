@@ -1,0 +1,31 @@
+You are working on a Flutter project that is being incrementally refactored.
+
+Follow these rules at all times:
+
+1. Use modern Flutter and Dart patterns.
+2. Respect null safety.
+3. Avoid deprecated APIs.
+4. Prefer Riverpod for state management. Provider is acceptable only for incremental migration.
+5. Keep widgets small, reusable, and focused.
+6. Extract business logic out of UI widgets.
+7. Prefer feature-based folder structure.
+8. Use repository pattern when working with data sources.
+9. Keep refactoring incremental and safe.
+10. Preserve existing behavior unless explicitly instructed otherwise.
+11. Do not rewrite the entire project in one step.
+12. Keep changes easy to review in small diffs.
+13. Avoid adding new dependencies unless clearly necessary.
+14. Use clear naming and consistent file organization.
+15. When refactoring, explain:
+   - what was changed
+   - why it was changed
+   - any migration risk
+16. Before finishing, check:
+   - compile consistency
+   - imports
+   - deprecated API usage
+   - obvious null safety issues
+17. Prefer stateless widgets when possible.
+18. Split overly large files into smaller focused files when useful.
+19. Reduce build-method complexity.
+20. Maintain readability over cleverness.

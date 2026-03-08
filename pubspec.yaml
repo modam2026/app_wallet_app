@@ -1,0 +1,108 @@
+name: app_wallet_app
+description: A new Flutter project.
+
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+version: 1.0.1+19
+
+environment:
+  sdk: '>=3.9.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  audioplayers: ^6.0.0  
+  url_launcher: ^6.2.0
+  path_provider: ^2.1.5
+  flutter_svg: ^2.0.0
+  google_fonts: ^2.1.0
+  intl: ^0.17.0
+  timezone: ^0.8.0
+  shared_preferences: ^2.2.0
+  #2023.06.04 add
+  google_mobile_ads:
+    path: plugins/google_mobile_ads
+  flutter_native_splash: ^2.2.19
+  introduction_screen: ^3.1.8
+
+  cupertino_icons: ^1.0.2
+  dio: ^4.0.6
+  provider: ^6.0.5
+  firebase_core: ^2.4.0
+  firebase_messaging:  ^14.6.5
+  firebase_auth: ^4.2.1
+  http: ^0.13.5
+  xml2json: ^5.3.6
+  cloud_firestore: ^4.6.0
+  box: ^0.3.3+2
+  mysql1: ^0.20.0
+  permission_handler: ^12.0.0
+  # pub.dev 에서 webview 검색하여 버젼 확인
+  webview_flutter: ^4.13.1  
+  sql_conn:
+    path: plugins/sql_conn
+  sqflite: ^2.4.0
+  fluttertoast: ^9.0.0
+  flutter_tts: ^4.2.3
+  firebase_storage: ^11.1.2
+  device_apps:
+    path: plugins/device_apps
+
+dependency_overrides:
+  win32: ^5.5.0
+  path_provider_android: ^2.2.5
+  permission_handler_android: ^12.0.0
+  shared_preferences_android: ^2.2.5
+  url_launcher_android: ^6.3.3
+  flutter_keyboard_visibility:
+    path: plugins/flutter_keyboard_visibility
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^2.0.0
+
+# The following section is specific to Flutter packages.
+flutter:
+
+  uses-material-design: true
+
+  fonts:
+    - family: Domine
+      fonts:
+        - asset: assets/fonts/Domine-VariableFont_wght.ttf
+    - family: DancingScript
+      fonts:
+        - asset: assets/fonts/DancingScript-VariableFont_wght.ttf
+
+  # To add assets to your application, add an assets section, like this:
+  assets:
+    - assets/images/game.png
+    - assets/images/website.png
+    - assets/images/etc.png
+    - assets/images/modam_tech.png
+    - assets/json/data.json
+    - assets/icons/save_icon.svg
+    - assets/icons/done-svgrepo-com.svg
+    - assets/icons/search-file-svgrepo-com.svg
+    - assets/icons/file-text-svgrepo-com.svg
+
+  #2023.06.04 add
+    - assets/images/web_address_d.png
+    - assets/images/web_address_w.png
+    - assets/images/web_address_m.png
+    - assets/images/web_address_g.png
+    - assets/images/web_address_e.png
+    - assets/icons/done-svgrepo-com.svg
+    - assets/images/modamtech_splash.png
+    - assets/images/introduction1.png
+    - assets/images/introduction2.png
+    - assets/images/introduction3.png
+    - assets/images/introduction4.png
+    - assets/images/webaddresswallet.png
+
+flutter_native_splash:
+  color: "#FFFFFF"
+  image: assets/images/modamtech_splash.png
+  fill: false  

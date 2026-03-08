@@ -1,0 +1,1 @@
+typedef CustomDrawerCallback = void Function();
