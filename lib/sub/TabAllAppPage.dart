@@ -1,3 +1,4 @@
+import 'package:app_wallet_app/common/app_constants.dart';
 import 'package:app_wallet_app/common/dic_service.dart';
 import 'package:app_wallet_app/sub/PageAllGoogle.dart';
 import 'package:flutter/material.dart';
@@ -13,7 +14,7 @@ class TabAllAppPage extends StatefulWidget {
 }
 
 class _TabAllAppPageState extends State<TabAllAppPage> {
-  List<String> pageList = ['사용자', '구글&폰앱', '시스템'];
+  final List<String> pageList = kAllAppGroupList;
   late String dropdownValue;
   final PageController _pageController = PageController(initialPage: 0);
 

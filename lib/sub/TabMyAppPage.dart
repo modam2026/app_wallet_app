@@ -1,3 +1,4 @@
+import 'package:app_wallet_app/common/app_constants.dart';
 import 'package:app_wallet_app/common/dic_service.dart';
 //import 'package:app_wallet_app/sub/PageMyCfgList.dart';
 import 'package:app_wallet_app/sub/PageMyUserBank.dart';
@@ -17,7 +18,7 @@ class TabMyAppPage extends StatefulWidget {
 }
 
 class _TabMyAppPageState extends State<TabMyAppPage> {
-  List<String> pageList = ['전체', 'SNS', '구글&폰앱', '사용자', '금융', '기관'];
+  final List<String> pageList = kMyAppGroupList;
   late String dropdownValue;
   final PageController _pageController = PageController(initialPage: 0);
 

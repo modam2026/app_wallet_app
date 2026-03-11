@@ -6,21 +6,29 @@ import 'package:provider/provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:app_wallet_app/common/sql_web_helper.dart';
 
-class DrawerPage extends StatefulWidget {
+class DrawerPageGrp extends StatefulWidget {
   final CustomDrawerCallback? onItemSelected;
+  final List<GroupItem>? groupList;
 
-  const DrawerPage({Key? key, this.onItemSelected}) : super(key: key);
+  const DrawerPageGrp({Key? key, this.onItemSelected, this.groupList})
+    : super(key: key);
 
   @override
-  State<DrawerPage> createState() => _DrawerPageState();
+  State<DrawerPageGrp> createState() => _DrawerPageGrpState();
 }
 
-class _DrawerPageState extends State<DrawerPage> {
+class _DrawerPageGrpState extends State<DrawerPageGrp> {
   String? strSeletedClass = "";
 
   TextEditingController classController = TextEditingController();
   TextEditingController captionController = TextEditingController();
   TextEditingController webUrlController = TextEditingController();
+
+  /// 팝업 메뉴에 쓸 그룹 목록. DB에서 넘어온 groupList만 사용, 없으면 빈 목록
+  List<GroupItem> get _menuGroupList =>
+      (widget.groupList != null && widget.groupList!.isNotEmpty)
+      ? widget.groupList!
+      : [];
 
   // ----- AdMob: 로컬용 비활성화. 스토어 배포 시 주석 해제 -----
   // bool _isAdLoaded = false;
@@ -125,7 +133,7 @@ class _DrawerPageState extends State<DrawerPage> {
                       height: 50,
                       child: Center(
                         child: Text(
-                          "웹 사이트 관리",
+                          "그룹 관리",
                           style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold, // 텍스트를 굵게 만듭니다.
@@ -164,7 +172,7 @@ class _DrawerPageState extends State<DrawerPage> {
                       SizedBox(
                         width: 230,
                         child: Text(
-                          "분류",
+                          "그룹명",
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold, // 텍스트를 굵게 만듭니다.
@@ -203,49 +211,29 @@ class _DrawerPageState extends State<DrawerPage> {
                           ),
                         ),
                         onSelected: (String result) {
+                          debugPrint(
+                            'DrawerPageGrp onSelected result: $result',
+                          );
+                          // value 형식: "code|codeName" (DB 그룹/기본 그룹 공통)
+                          final parts = result.split('|');
+                          final code = parts.isNotEmpty ? parts[0] : '';
+                          final codeName = parts.length > 1 ? parts[1] : code;
                           setState(() {
-                            classController.text = result;
-                            strSeletedClass = result.trim();
+                            classController.text = codeName;
+                            strSeletedClass = code;
                           });
                         },
-                        itemBuilder: (BuildContext context) =>
-                            <PopupMenuEntry<String>>[
-                              PopupMenuItem<String>(
-                                value: '  매일',
+                        itemBuilder: (BuildContext context) => _menuGroupList
+                            .map(
+                              (GroupItem item) => PopupMenuItem<String>(
+                                value: '${item.code}|${item.codeName}',
                                 child: Text(
-                                  '매일',
-                                  style: TextStyle(fontSize: 15.0), // 글꼴 크기 조절
-                                ),
-                              ),
-                              PopupMenuItem<String>(
-                                value: '  매주',
-                                child: Text(
-                                  '매주',
+                                  item.codeName,
                                   style: TextStyle(fontSize: 15.0),
                                 ),
                               ),
-                              PopupMenuItem<String>(
-                                value: '  매월',
-                                child: Text(
-                                  '매월',
-                                  style: TextStyle(fontSize: 15.0),
-                                ),
-                              ),
-                              PopupMenuItem<String>(
-                                value: '  가끔',
-                                child: Text(
-                                  '가끔',
-                                  style: TextStyle(fontSize: 15.0),
-                                ),
-                              ),
-                              PopupMenuItem<String>(
-                                value: '  게임',
-                                child: Text(
-                                  '게임',
-                                  style: TextStyle(fontSize: 15.0),
-                                ),
-                              ),
-                            ],
+                            )
+                            .toList(),
                       ),
                     ),
                   ],
@@ -376,25 +364,8 @@ class _DrawerPageState extends State<DrawerPage> {
                     onPressed: () async {
                       String strCaptionCtrl = captionController.text;
                       String strWebUrlCtrl = webUrlController.text;
-                      String? strTagCtrl = "";
-
-                      switch (strSeletedClass) {
-                        case "매일":
-                          strTagCtrl = "d";
-                          break;
-                        case "매주":
-                          strTagCtrl = "w";
-                          break;
-                        case "매월":
-                          strTagCtrl = "m";
-                          break;
-                        case "게임":
-                          strTagCtrl = "g";
-                          break;
-                        default:
-                          strTagCtrl = "e";
-                          break;
-                      }
+                      // 선택된 그룹 코드 사용 (DB 그룹 포함, 기본 매일/매주/매월/가끔/게임도 code로 저장됨)
+                      String? strTagCtrl = strSeletedClass ?? "";
 
                       final chkData = await SQLWebHelper.chkCaption(
                         strWebUrlCtrl,
@@ -409,7 +380,7 @@ class _DrawerPageState extends State<DrawerPage> {
                       if (!pattern.hasMatch(strWebUrlCtrl)) {
                         dicService.showCheckUrl();
                       } else if (strTagCtrl.isEmpty) {
-                        dicService.showCheckItems("분류");
+                        dicService.showCheckItems("그룹명");
                       } else if (strCaptionCtrl.isEmpty) {
                         dicService.showCheckItems("사이트명");
                       } else if (strWebUrlCtrl.isEmpty) {

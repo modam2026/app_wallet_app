@@ -1,4 +1,5 @@
 import 'package:app_wallet_app/common/AppCache.dart';
+import 'package:app_wallet_app/common/app_constants.dart';
 import 'package:app_wallet_app/common/sql_helper.dart';
 import 'package:device_apps/device_apps.dart';
 import 'package:flutter/material.dart';
@@ -210,15 +211,7 @@ class CommonHelper {
     // DropdownButton<String> 위젯의 상태를 저장하기 위한 변수를 추가합니다.
     String dropdownValue = '전체';
     // DropdownButton<String>에서 사용할 항목을 선언합니다.
-    final List<String> pageList = [
-      '전체',
-      //      '사용앱',
-      'SNS',
-      '구글&폰앱',
-      '사용자',
-      '금융',
-      '기관',
-    ];
+    final List<String> pageList = kMyAppGroupList;
 
     showDialog(
       context: context,

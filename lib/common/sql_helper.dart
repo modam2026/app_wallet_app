@@ -424,6 +424,18 @@ class SQLHelper {
     return result;
   }
 
+  /// 나의 앱 / 전체 앱 탭용: tbl_my_application_info 에서 중복 제거한 app_user_group 목록
+  static Future<List<String>> getDistinctAppUserGroups() async {
+    final appMngmntDB = await SQLHelper.appMngmntDB();
+    const String sql = '''
+      SELECT DISTINCT app_user_group FROM tbl_my_application_info
+      WHERE TRIM(app_user_group) != ''
+      ORDER BY app_user_group
+    ''';
+    final rows = await appMngmntDB.rawQuery(sql);
+    return rows.map<String>((r) => r['app_user_group'] as String? ?? '').toList();
+  }
+
   // Create new sentence
   static Future<int> addMyIntrnAppInfo(
     String pAppName,
