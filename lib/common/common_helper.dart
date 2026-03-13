@@ -4,6 +4,19 @@ import 'package:app_wallet_app/common/sql_helper.dart';
 import 'package:device_apps/device_apps.dart';
 import 'package:flutter/material.dart';
 
+/// 앱 데이터 초기화 및 앱별 조작(열기·삭제·고정·그룹 변경) 비즈니스 로직을 담당하는 싱글톤 클래스.
+///
+/// 작업 순서:
+///   1. [instance]              - 싱글톤 인스턴스 반환 (앱 전체에서 하나만 존재)
+///   2. [initIntrnAppInfo]      - 앱 시작 시 전체/분류별 캐시 데이터를 메모리에 로딩
+///       └ [getCachedApplications] - AppCache + SQLHelper 를 조합하여 화면용 데이터 생성
+///           └ [getListCachedApplication] - Map 리스트에서 CachedApplication 목록만 추출
+///   3. [openApp]               - 앱 실행 + [changeOpenStatus] 호출하여 사용 이력 기록
+///   4. [changeOpenStatus]      - DB 에 앱 사용 횟수·기간 업데이트 후 메모리 정렬
+///   5. [deleteApp]             - DB 에서 앱 삭제 + 메모리 목록에서도 제거
+///   6. [fixingApp]             - 앱 고정/해제 토글 (DB + 메모리 동기화)
+///   7. [changeGroup]           - 앱 그룹 변경 (DB + 메모리 동기화)
+///   8. [showConfirmationDialog]- 앱 롱프레스 시 그룹변경·고정·삭제 다이얼로그 표시
 class CommonHelper {
   List<Map<String, dynamic>> appDataWithAll = [];
   List<Map<String, dynamic>> appDataWithMine = [];
@@ -13,10 +26,13 @@ class CommonHelper {
 
   static CommonHelper? _instance;
   CommonHelper._();
+  /// 싱글톤 인스턴스를 반환. 최초 호출 시 인스턴스를 생성하고 이후에는 동일 인스턴스 재사용.
   static CommonHelper get instance {
     return _instance ??= CommonHelper._();
   }
 
+  /// Map 리스트에서 'cached_application' 키에 해당하는 [CachedApplication] 목록만 추출하여 반환.
+  /// [getCachedApplications] 가 생성한 Map 목록을 단순 [CachedApplication] 목록으로 변환할 때 사용.
   Future<List<CachedApplication>> getListCachedApplication(
     List<Map<String, dynamic>> appData,
   ) async {
@@ -28,6 +44,17 @@ class CommonHelper {
     return tmpAllApps;
   }
 
+  /// AppCache(캐시) 와 SQLHelper(분류 데이터) 를 조합하여 화면 표시용 앱 목록 생성.
+  ///
+  /// 작업 순서:
+  ///   1. [AppCache.getCachedApps] 로 전체 설치 앱 캐시 목록 조회
+  ///   2. packageName 을 키로 Map 생성 (O(1) 빠른 조회 목적)
+  ///   3. [SQLHelper.initIntrnAppListData] 로 pKind/pUserGroup 기준 분류 데이터 생성
+  ///   4. 분류 데이터 각 항목에 캐시 앱 정보(아이콘 등) 병합하여 최종 목록 구성
+  ///   5. 메모리 정리 후 결과 반환
+  ///
+  /// - pKind: 'A'=전체, 'U'=사용자, 'I'=기관, 'S'=시스템
+  /// - pUserGroup: 세부 그룹 코드 (빈 문자열이면 전체)
   Future<List<Map<String, dynamic>>> getCachedApplications(
     String pKind,
     String pUserGroup,
@@ -68,6 +95,13 @@ class CommonHelper {
     return appDataWithApplication;
   }
 
+  /// 앱 시작 시 전체 및 분류별 앱 데이터를 메모리(appDataWith*)에 로딩.
+  ///
+  /// 작업 순서:
+  ///   1. getCachedApplications("A") → appDataWithAll  (전체 앱, 나의 앱/전체 앱 공통)
+  ///   2. getCachedApplications("U") → appDataWithUser (사용자 앱)
+  ///   3. getCachedApplications("I") → appDataWithInst (구글·삼성 등 기관 앱)
+  ///   4. getCachedApplications("S") → appDataWithSys  (시스템 앱)
   Future<int> initIntrnAppInfo() async {
     // 전체 앱 기준 데이터 (나의 앱/전체 앱 공통으로 사용)
     appDataWithAll = await getCachedApplications("A", "");
@@ -79,12 +113,22 @@ class CommonHelper {
     return 0;
   }
 
+  /// 앱을 실행하고 사용 이력(사용 횟수·기간)을 DB 에 기록.
+  ///
+  /// 작업 순서:
+  ///   1. [changeOpenStatus] 호출하여 DB 사용 이력 업데이트 및 메모리 정렬
+  ///   2. DeviceApps.openApp 으로 해당 앱 실행
   Future<int> openApp(CachedApplication app) async {
     changeOpenStatus(app);
     await DeviceApps.openApp(app.packageName);
     return 0;
   }
 
+  /// "나의 앱" 목록에서 특정 앱을 DB 와 메모리 모두에서 삭제.
+  ///
+  /// 작업 순서:
+  ///   1. [SQLHelper.deleteMyIntrnAppInfo] 로 DB 에서 해당 앱 레코드 삭제
+  ///   2. appDataWithMine 에서 해당 앱 인덱스 탐색 후 메모리 목록에서도 제거
   void deleteApp(CachedApplication appWithIcon) {
     SQLHelper.deleteMyIntrnAppInfo(
       appWithIcon.appName,
@@ -99,6 +143,11 @@ class CommonHelper {
     }
   }
 
+  /// 앱 고정/해제를 토글. DB 와 메모리(appDataWithMine) 를 동기화.
+  ///
+  /// 작업 순서:
+  ///   1. [SQLHelper.fixMyIntrnAppInfo] 로 DB 의 is_fixed_app 값 0↔1 토글
+  ///   2. appDataWithMine 에서 해당 앱 탐색 후 메모리 상의 is_fixed_app 값도 토글
   void fixingApp(CachedApplication appWithIcon) {
     SQLHelper.fixMyIntrnAppInfo(appWithIcon.appName, appWithIcon.packageName);
 
@@ -115,6 +164,11 @@ class CommonHelper {
     }
   }
 
+  /// 앱의 그룹 분류를 변경. DB 와 메모리(appDataWithMine) 를 동기화.
+  ///
+  /// 작업 순서:
+  ///   1. [SQLHelper.changeMyGroupInfo] 로 DB 의 app_order·app_kind·app_user_group 업데이트
+  ///   2. appDataWithMine 에서 해당 앱 탐색 후 메모리 상의 그룹 정보도 업데이트
   void changeGroup(
     CachedApplication appWithIcon,
     String pAppOrder,
@@ -140,6 +194,15 @@ class CommonHelper {
     }
   }
 
+  /// 앱 실행 시 DB 사용 이력을 업데이트하고 메모리 목록을 재정렬.
+  ///
+  /// 작업 순서:
+  ///   1. [SQLHelper.changeOpenStatusInfo] 로 DB의 app_num·app_opening·use_period_at 업데이트
+  ///      및 전체 앱의 app_use_period(사용 경과일) 재계산
+  ///   2. 반환된 전체 앱 목록으로 appDataWithMine 의 app_num·app_use_period·is_fixed_app 갱신
+  ///   3. [SQLHelper.selectNumStatusInfo] 로 현재 앱의 최신 app_num 조회
+  ///   4. appDataWithMine 에 해당 앱이 없으면 → [SQLHelper.addMyIntrnAppInfo] 로 신규 추가
+  ///   5. appDataWithMine 을 is_fixed_app > app_use_period > app_num 순으로 정렬
   void changeOpenStatus(CachedApplication appWithIcon) async {
     final appData = await SQLHelper.changeOpenStatusInfo(
       appWithIcon.appName,
@@ -203,6 +266,15 @@ class CommonHelper {
     });
   }
 
+  /// 앱 아이콘 롱프레스 시 그룹변경·고정·삭제 옵션 다이얼로그를 표시.
+  ///
+  /// 작업 순서:
+  ///   1. 그룹 드롭다운 초기값 및 목록(kMyAppGroupList) 설정
+  ///   2. showDialog 로 AlertDialog 표시 (StatefulBuilder 로 드롭다운 상태 관리)
+  ///   3. "그룹 변경" 버튼 → 선택한 그룹명을 코드로 변환 후 [changeGroup] 호출
+  ///   4. "앱 고정/풀기" 버튼 → [fixingApp] 호출 (is_fixed_app 0↔1 토글)
+  ///   5. "앱 삭제" 버튼 → [deleteApp] 호출 (DB + 메모리 삭제)
+  ///   6. 각 버튼 처리 후 [notifyStateChanged] 콜백으로 부모 위젯 화면 갱신
   void showConfirmationDialog(
     CachedApplication appWithIcon,
     BuildContext context,

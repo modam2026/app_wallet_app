@@ -6,6 +6,18 @@ import 'package:provider/provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:app_wallet_app/common/sql_web_helper.dart';
 
+/// 웹 사이트를 신규 등록하는 Drawer(우측 패널) 페이지.
+///
+/// 작업 순서:
+///   1. [initState]  - 초기 상태 설정 (컨트롤러 초기화)
+///   2. [build]      - 분류 선택(팝업) → 사이트명 입력 → URL 입력 → 추가 버튼 UI 구성
+///   3. 추가 버튼 onPressed:
+///       a. URL 형식 유효성 검사 (RegExp)
+///       b. 분류·사이트명·URL 미입력 여부 확인
+///       c. [SQLWebHelper.chkCaption] 으로 중복 URL 확인
+///       d. 이상 없으면 [SQLWebHelper.createWebInfo] 로 DB 저장
+///       e. Drawer 닫기 + [onItemSelected] 콜백으로 부모 화면 갱신
+///   4. [dispose]    - 자원 해제
 class DrawerPage extends StatefulWidget {
   final CustomDrawerCallback? onItemSelected;
 

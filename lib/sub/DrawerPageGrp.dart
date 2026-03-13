@@ -6,6 +6,20 @@ import 'package:provider/provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:app_wallet_app/common/sql_web_helper.dart';
 
+/// 그룹 코드를 선택하여 웹 사이트를 등록하는 Drawer(우측 패널) 페이지.
+/// [DrawerPage] 와 달리 DB 에서 읽어온 동적 그룹 목록([groupList])을 팝업 메뉴로 표시.
+///
+/// 작업 순서:
+///   1. [initState]       - 초기 상태 설정
+///   2. [_menuGroupList]  - 부모로부터 전달받은 [groupList] 를 팝업 메뉴 항목으로 변환
+///   3. [build]           - 그룹명 선택(팝업) → 사이트명 입력 → URL 입력 → 추가 버튼 UI 구성
+///   4. 추가 버튼 onPressed:
+///       a. URL 형식 유효성 검사 (RegExp)
+///       b. 그룹·사이트명·URL 미입력 여부 확인
+///       c. [SQLWebHelper.chkCaption] 으로 중복 URL 확인
+///       d. 이상 없으면 [SQLWebHelper.createWebInfo] 로 DB 저장 (그룹 코드 포함)
+///       e. Drawer 닫기 + [onItemSelected] 콜백으로 부모 화면 갱신
+///   5. [dispose]         - 자원 해제
 class DrawerPageGrp extends StatefulWidget {
   final CustomDrawerCallback? onItemSelected;
   final List<GroupItem>? groupList;

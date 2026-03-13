@@ -7,6 +7,19 @@ import 'package:app_wallet_app/common/dic_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:app_wallet_app/common/sql_web_helper.dart';
 
+/// "웹" 탭 화면.
+/// 사용자가 등록한 웹 사이트 목록을 카드 형태로 표시하고, 접속·순서 변경·수정 기능을 제공.
+///
+/// 작업 순서:
+///   1. [initState]        - [refreshWebUrls] 호출하여 DB 에서 웹사이트 목록 초기 로딩
+///   2. [refreshWebUrls]   - [SQLWebHelper.getWebInfos] 로 DB 조회 후 _captions 갱신 및 화면 재빌드
+///   3. [build]            - 웹사이트 카드 ListView 구성 (태그별 색상·이미지 다르게 표시)
+///   4. 카드 탭 시          - [SQLWebHelper.updateUsedCnt] 로 사용 횟수 업데이트 + [_launchUrl] 로 브라우저 실행
+///   5. 상단 이동 버튼 탭 시  - [SQLWebHelper.updateMaxUsedCnt] 로 해당 항목을 목록 맨 위로 이동
+///   6. 수정 버튼 탭 시      - endDrawer 열기 + [DrawerWebPage] 에 선택 항목 전달
+///   7. [refreshThisPage]  - DicService 콜백 상태 갱신으로 전체 화면 재빌드 유도
+///   8. [_launchUrl]       - url_launcher 로 외부 브라우저 실행
+///   9. [dispose]          - TextEditingController 자원 해제
 class TabWebPage extends StatefulWidget {
   const TabWebPage({Key? key}) : super(key: key);
 
@@ -27,6 +40,8 @@ class _TabWebPageState extends State<TabWebPage> {
   // final String adUnitId = "ca-app-pub-1137307533515832/4573396484";
   // final String adUnitId = "ca-app-pub-3940256099942544/6300978111"; // 테스트
 
+  /// DicService 의 callbackStatus 를 true 로 설정하여 웹 탭 화면 전체를 갱신.
+  /// Drawer(DrawerWebPage) 작업 완료 후 콜백으로 호출됨.
   void refreshThisPage() async {
     final dicService = Provider.of<DicService>(context, listen: false);
     setState(() {
@@ -35,6 +50,11 @@ class _TabWebPageState extends State<TabWebPage> {
     });
   }
 
+  /// DB 에서 웹사이트 목록을 다시 조회하여 _captions 를 갱신하고 화면을 재빌드.
+  ///
+  /// 작업 순서:
+  ///   1. [SQLWebHelper.getWebInfos] 로 DB 에서 웹사이트 목록 조회
+  ///   2. 위젯이 마운트 상태인지 확인 후 setState 로 _captions 갱신
   void refreshWebUrls() async {
     var data = await SQLWebHelper.getWebInfos();
     if (!mounted) return;
@@ -263,6 +283,8 @@ class _TabWebPageState extends State<TabWebPage> {
     );
   }
 
+  /// url_launcher 를 이용하여 외부 브라우저로 URL 을 실행.
+  /// 실행 불가 시 SnackBar 로 오류 메시지 표시.
   void _launchUrl(BuildContext context, String url) async {
     if (await canLaunch(url)) {
       await launch(url);

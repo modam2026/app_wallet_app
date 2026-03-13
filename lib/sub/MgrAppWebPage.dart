@@ -11,6 +11,17 @@ import 'package:app_wallet_app/sub/TabWebPage.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+/// 앱 전체의 최상위 관리 페이지 (루트 화면).
+///
+/// 작업 순서:
+///   1. [initState]               - TabController 생성, 1초 타이머 시작, 앱 데이터 초기화
+///   2. [_initAsync]              - [_initInternalAppInfo] 를 비동기로 호출
+///   3. [_initInternalAppInfo]    - CommonHelper 로 전체/분류별 앱 캐시 데이터 메모리 로딩
+///   4. [_loadGroupNamesForTab]   - 현재 선택 탭에 따라 DB 에서 그룹 목록을 읽어 Drawer 에 셋팅
+///   5. [_onTabChanged]           - 탭 전환 시 [_loadGroupNamesForTab] 재호출
+///   6. [build]                   - AppBar(날짜/시간/탭바) + TabBarView(나의앱·전체앱·웹) + endDrawer 구성
+///   7. [refreshThisPage]         - Drawer 작업 완료 후 DicService 를 통해 화면 전체 갱신
+///   8. [dispose]                 - TabController, Timer 자원 해제
 class MgrAppWebPage extends StatefulWidget {
   const MgrAppWebPage({Key? key}) : super(key: key);
 
@@ -33,7 +44,8 @@ class _MgrAppWebPageState extends State<MgrAppWebPage>
     GroupItem('g', '게임'),
   ];
 
-  /// AM/PM + 12시간 형식 hh:mm:ss
+  /// 현재 시각을 AM/PM + 12시간제(hh:mm:ss) 형식의 문자열로 반환.
+  /// AppBar 타이틀에 1초마다 갱신되어 표시됨.
   String get _timeString {
     final h24 = _now.hour; // 0~23
     final prefix = h24 < 12 ? 'AM' : 'PM';
@@ -41,6 +53,7 @@ class _MgrAppWebPageState extends State<MgrAppWebPage>
     return '$prefix ${h12.toString().padLeft(2, '0')}:${_now.minute.toString().padLeft(2, '0')}:${_now.second.toString().padLeft(2, '0')}';
   }
 
+  /// Drawer 작업 완료 후 DicService 의 callbackStatus 를 true 로 설정하여 전체 화면을 갱신.
   void refreshThisPage() async {
     final dicService = Provider.of<DicService>(context, listen: false);
     setState(() {
@@ -49,6 +62,8 @@ class _MgrAppWebPageState extends State<MgrAppWebPage>
     });
   }
 
+  /// initState 에서 비동기 초기화를 호출하기 위한 래퍼 함수.
+  /// [_initInternalAppInfo] 를 await 로 순차 실행.
   Future<void> _initAsync() async {
     await _initInternalAppInfo();
   }
@@ -68,6 +83,8 @@ class _MgrAppWebPageState extends State<MgrAppWebPage>
     _loadGroupNamesForTab(0);
   }
 
+  /// TabController 의 탭 전환 이벤트 리스너.
+  /// 탭 전환이 완료되고 위젯이 마운트 상태일 때 [_loadGroupNamesForTab] 을 호출.
   void _onTabChanged() {
     if (!_tabController.indexIsChanging && mounted) {
       _loadGroupNamesForTab(_tabController.index);
@@ -237,6 +254,11 @@ class _MgrAppWebPageState extends State<MgrAppWebPage>
     );
   }
 
+  /// CommonHelper 를 통해 전체/분류별 앱 데이터를 메모리에 로딩하고 화면을 갱신.
+  ///
+  /// 작업 순서:
+  ///   1. [CommonHelper.initIntrnAppInfo] 로 앱 캐시 데이터 로딩
+  ///   2. setState 로 화면 재빌드
   Future<void> _initInternalAppInfo() async {
     // 전체 앱/분류별 캐시 데이터를 먼저 로딩해 둔다.
     await commonHelper.initIntrnAppInfo();

@@ -10,6 +10,16 @@ import 'package:app_wallet_app/sub/PageMyUserSns.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+/// "나의 앱" 탭 화면.
+/// 사용자가 직접 추가한 앱을 그룹별(전체/SNS/구글&폰앱/사용자/금융/기관)로 분류하여 PageView 로 표시.
+///
+/// 작업 순서:
+///   1. [initState]  - 그룹 드롭다운 목록 초기화, 하위 페이지 목록(_pages) 생성
+///                     (PageMyUserDef·PageMyUserSns·PageMyUserInstSys·PageMyUserEtc·PageMyUserBank·PageMyUserGov)
+///   2. [build]      - 상단 드롭다운(그룹 선택) + PageView(하위 페이지) 레이아웃 구성
+///   3. 드롭다운 변경 시 → [PageController.jumpToPage] 로 해당 페이지로 이동
+///   4. PageView 스와이프 시 → 드롭다운 값 동기화
+///   5. [dispose]    - PageController 자원 해제
 class TabMyAppPage extends StatefulWidget {
   const TabMyAppPage({Key? key}) : super(key: key);
 

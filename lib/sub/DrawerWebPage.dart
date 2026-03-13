@@ -6,6 +6,21 @@ import 'package:provider/provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:app_wallet_app/common/sql_web_helper.dart';
 
+/// 기존 웹 사이트를 수정하거나 삭제하는 Drawer(우측 패널) 페이지.
+///
+/// 작업 순서:
+///   1. [initState]  - 부모로부터 전달받은 [captionItem] 으로 사이트명·URL 컨트롤러 초기값 셋팅
+///   2. [build]      - 사이트명 입력 → URL 입력 → 수정 버튼 / 삭제 버튼 UI 구성
+///   3. 수정 버튼 onPressed:
+///       a. URL 형식 유효성 검사 (RegExp)
+///       b. 사이트명·URL 미입력 여부 확인
+///       c. [SQLWebHelper.chkCaption] 으로 중복 URL 확인
+///       d. 이상 없으면 [SQLWebHelper.editWebInfo] 로 DB 수정
+///       e. Drawer 닫기 + [onItemSelected] 콜백으로 부모 화면 갱신
+///   4. 삭제 버튼 onPressed:
+///       a. [SQLWebHelper.deleteWebUrl] 로 DB 에서 해당 항목 삭제
+///       b. Drawer 닫기 + [onItemSelected] 콜백으로 부모 화면 갱신
+///   5. [dispose]    - 컨트롤러 자원 해제 + [onItemSelected] 콜백 호출
 class DrawerWebPage extends StatefulWidget {
   final CustomDrawerCallback? onItemSelected;
   final Map<String, dynamic> captionItem;

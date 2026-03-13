@@ -3,7 +3,27 @@ import 'package:app_wallet_app/common/common_helper.dart';
 import 'package:sqflite/sqflite.dart' as sql;
 //import 'package:device_apps/device_apps.dart';
 
+/// SQLite DB(db_app_management.db) 의 tbl_my_application_info 테이블에 대한
+/// CRUD 및 초기화 작업을 담당하는 정적(static) 유틸리티 클래스.
+///
+/// 작업 순서:
+///   1. [appMngmntDB]             - DB 파일 열기 (없으면 [createIntrnAppTables] 로 테이블 생성)
+///   2. [hasMyApps]               - "나의 앱" 테이블에 데이터 존재 여부 확인
+///   3. [makeIntrnAppListData]    - 패키지명을 분석하여 앱 분류(그룹) 데이터 생성
+///   4. [initIntrnAppListData]    - 캐시된 전체 앱 목록을 분류별로 필터링하여 반환
+///   5. [addMyIntrnAppInfo]       - "나의 앱" 목록에 앱 신규 추가 (중복 시 사용 이력 업데이트)
+///   6. [isAppInDatabase]         - 특정 앱이 DB 에 저장되어 있는지 확인
+///   7. [changeOpenStatusInfo]    - 앱 실행 시 사용 횟수(app_num)·사용 기간(app_use_period) 업데이트
+///   8. [selectNumStatusInfo]     - 현재 최대 app_num 조회
+///   9. [updateMyIntrnAppStts]    - is_first_input 플래그 일괄 업데이트
+///  10. [getMyAppsFromDB]         - "나의 앱" 전체 목록 조회 (정렬: 고정 > 사용기간 > 사용횟수)
+///  11. [getDistinctAppUserGroups]- 중복 제거된 app_user_group 목록 조회 (Drawer 그룹 목록용)
+///  12. [fixMyIntrnAppInfo]       - 앱 고정/해제 토글 (is_fixed_app 0↔1)
+///  13. [changeMyGroupInfo]       - 앱 그룹 변경 (app_order, app_kind, app_user_group 업데이트)
+///  14. [deleteMyIntrnAppInfo]    - 특정 앱 데이터 삭제
 class SQLHelper {
+  /// DB 최초 생성 시 tbl_my_application_info 테이블을 생성.
+  /// [appMngmntDB] 의 onCreate 콜백에서만 호출됨.
   static Future<void> createIntrnAppTables(sql.Database database) async {
     await database.execute("""CREATE TABLE tbl_my_application_info (
       id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -34,6 +54,9 @@ class SQLHelper {
   // ******************* //
 
   // created_at: 2023.06.03
+  /// DB 파일(db_app_management.db)을 열고 [sql.Database] 인스턴스를 반환.
+  /// DB 파일이 없으면 [createIntrnAppTables] 를 호출하여 테이블을 자동 생성.
+  /// 모든 DB 작업 함수의 첫 번째 단계로 반드시 호출됨.
   static Future<sql.Database> appMngmntDB() async {
     return sql.openDatabase(
       'db_app_management.db',
@@ -44,7 +67,8 @@ class SQLHelper {
     );
   }
 
-  // 현재 "나의 앱 리스트" 테이블에 데이터가 있는지 여부를 반환
+  /// tbl_my_application_info 테이블에 데이터가 1건 이상 있으면 true, 없으면 false 반환.
+  /// "나의 앱" 화면 최초 진입 시 DB 초기화 여부 확인에 사용.
   static Future<bool> hasMyApps() async {
     final db = await SQLHelper.appMngmntDB();
 
@@ -57,6 +81,15 @@ class SQLHelper {
     return cnt > 0;
   }
 
+  /// 앱 이름과 패키지명을 분석하여 앱 분류(그룹) 정보가 담긴 Map 을 생성하여 반환.
+  ///
+  /// 작업 순서:
+  ///   1. 패키지명을 '.' 기준으로 최대 5개 파트로 분리
+  ///   2. 자사 앱(com.modamtech.app_wallet_app) 이면 빈 Map 반환 (목록 제외)
+  ///   3. 패키지 파트를 분석하여 app_kind(U/I/S) 와 app_user_group 코드 결정
+  ///      - I10: Google, I20: Samsung, I30: SEC, S1: Android 시스템
+  ///      - U01: 정보기관, U11: 은행, U12: 카드, U20: Kakao, U30: KT/SNS ...
+  ///   4. 분류 정보가 담긴 Map 반환 (app_num, app_order, app_kind, app_user_group 등)
   static Future<Map<String, dynamic>> makeIntrnAppListData(
     String pAppName,
     String pPackageName,
@@ -204,7 +237,13 @@ class SQLHelper {
     return item;
   }
 
-  // DB 방식이 아닌 List 객체 방식으로 변경된 함수
+  /// 캐시된 전체 앱 목록을 pKind 기준으로 필터링하여 분류 데이터 목록을 반환.
+  /// DB 조회 없이 메모리(캐시) 기반으로 동작 (DB 방식에서 List 방식으로 변경된 함수).
+  ///
+  /// 작업 순서:
+  ///   1. pAllApps(캐시 앱 목록) 를 순회하며 각 앱에 대해 [makeIntrnAppListData] 호출
+  ///   2. pKind == 'A' 이면 전체 추가, 아니면 app_kind 가 pKind 와 일치하는 것만 추가
+  ///   3. 필터링된 분류 데이터 목록 반환
   static Future<List<Map<String, dynamic>>> initIntrnAppListData(
     String pKind,
     String pUserGroup,
@@ -232,6 +271,8 @@ class SQLHelper {
     return makeAppsFromList;
   }
 
+  /// tbl_my_application_info 에서 특정 앱(app_name + package_name) 레코드를 삭제.
+  /// 삭제된 행 수를 반환 (성공 시 1, 없으면 0).
   static Future<int> deleteMyIntrnAppInfo(
     String pAppName,
     String pPackageName,
@@ -251,6 +292,8 @@ class SQLHelper {
     return result;
   }
 
+  /// 특정 앱의 is_fixed_app 값을 0→1 또는 1→0 으로 토글하여 고정/해제 처리.
+  /// 영향받은 행 수를 반환.
   static Future<int> fixMyIntrnAppInfo(
     String pAppName,
     String pPackageName,
@@ -271,6 +314,8 @@ class SQLHelper {
     return result;
   }
 
+  /// 특정 앱의 그룹 정보(app_order, app_kind, app_user_group) 를 변경.
+  /// 영향받은 행 수를 반환.
   static Future<int> changeMyGroupInfo(
     String pAppName,
     String pPackageName,
@@ -302,6 +347,13 @@ class SQLHelper {
     return result;
   }
 
+  /// 앱 실행 시 사용 이력을 DB 에 업데이트하고 전체 앱의 사용 경과일을 재계산.
+  ///
+  /// 작업 순서:
+  ///   1. 현재 최대 app_num 조회
+  ///   2. 해당 앱의 app_num(최대값+1), app_opening=1, use_period_at=현재시각 으로 UPDATE
+  ///   3. 전체 앱의 app_use_period = 오늘 - use_period_at 로 일괄 재계산
+  ///   4. 전체 앱의 app_num·app_name·package_name·app_use_period·is_fixed_app 조회 후 반환
   static Future<List<Map<String, dynamic>>> changeOpenStatusInfo(
     String pAppName,
     String pPackageName,
@@ -359,6 +411,8 @@ class SQLHelper {
     return tmpAppUsePeriod;
   }
 
+  /// tbl_my_application_info 에서 현재 최대 app_num 값을 조회하여 반환.
+  /// 데이터 없을 때는 0 반환 (COALESCE 처리).
   static Future<int> selectNumStatusInfo(
     String pAppName,
     String pPackageName,
@@ -380,6 +434,8 @@ class SQLHelper {
     return maxNum;
   }
 
+  /// is_first_input 플래그를 일괄 업데이트.
+  /// pOrder == 0 이면 전체 is_first_input = 0, 그 외면 is_first_input = 1 로 설정.
   static Future<int> updateMyIntrnAppStts(int pOrder) async {
     final db = await SQLHelper.appMngmntDB();
     String sql = "";
@@ -405,6 +461,8 @@ class SQLHelper {
     return result;
   }
 
+  /// "나의 앱" 목록 전체를 DB 에서 조회하여 반환.
+  /// 정렬: is_fixed_app DESC → app_use_period ASC → app_num DESC → app_order → app_kind → app_user_group → app_name
   static Future<List<Map<String, dynamic>>> getMyAppsFromDB() async {
     final appMngmntDB = await SQLHelper.appMngmntDB();
 
@@ -424,7 +482,8 @@ class SQLHelper {
     return result;
   }
 
-  /// 나의 앱 / 전체 앱 탭용: tbl_my_application_info 에서 중복 제거한 app_user_group 목록
+  /// tbl_my_application_info 에서 중복 제거된 app_user_group 코드 목록을 오름차순으로 조회.
+  /// Drawer 그룹 선택 팝업([DrawerPageGrp])에 표시할 그룹 목록을 제공하는 데 사용.
   static Future<List<String>> getDistinctAppUserGroups() async {
     final appMngmntDB = await SQLHelper.appMngmntDB();
     const String sql = '''
@@ -436,7 +495,14 @@ class SQLHelper {
     return rows.map<String>((r) => r['app_user_group'] as String? ?? '').toList();
   }
 
-  // Create new sentence
+  /// "나의 앱" 목록에 앱을 신규 추가. 이미 존재하면 사용 이력만 업데이트.
+  ///
+  /// 작업 순서:
+  ///   1. appDataWithAll 에서 해당 앱 탐색
+  ///   2. DB 에 이미 존재하면 → [changeOpenStatusInfo] 호출 후 종료
+  ///   3. 없으면 → 현재 최대 app_num+1 을 새 app_num 으로 설정
+  ///   4. pType == "OPN" 이면 app_opening=1, 아니면 0 으로 INSERT
+  ///   5. 삽입된 행의 id 반환
   static Future<int> addMyIntrnAppInfo(
     String pAppName,
     String pPackageName,
@@ -516,7 +582,8 @@ class SQLHelper {
     return result;
   }
 
-  // Create new sentence
+  /// 특정 앱(app_name + package_name) 이 DB 에 존재하면 true, 없으면 false 반환.
+  /// LIMIT 1 로 빠르게 존재 여부만 확인.
   static Future<bool> isAppInDatabase(
     String pAppName,
     String pPackageName,
