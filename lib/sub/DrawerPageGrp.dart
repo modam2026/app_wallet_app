@@ -5,6 +5,7 @@ import 'package:app_wallet_app/sub/drawer_callback.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:app_wallet_app/common/sql_web_helper.dart';
+import 'package:app_wallet_app/common/sql_helper.dart';
 
 /// 그룹 코드를 선택하여 웹 사이트를 등록하는 Drawer(우측 패널) 페이지.
 /// [DrawerPage] 와 달리 DB 에서 읽어온 동적 그룹 목록([groupList])을 팝업 메뉴로 표시.
@@ -61,7 +62,7 @@ class _DrawerPageGrpState extends State<DrawerPageGrp> {
   // void initAd() async {
   //   final double screenWidth = MediaQuery.of(context).size.width * 0.75;
   //   final AdSize? adSize = await AdSize.getAnchoredAdaptiveBannerAdSize(
-  //       Orientation.portrait, screenWidth.toInt());
+  //       Orientation.portrait, screenWidth.toInt()33333333333333333333333333333333333333333333;
   //   if (adSize != null) {
   //     _bannerAd = BannerAd(
   //       adUnitId: adUnitId,
@@ -224,23 +225,29 @@ class _DrawerPageGrpState extends State<DrawerPageGrp> {
                             style: TextStyle(color: Colors.black),
                           ),
                         ),
-                        onSelected: (String result) {
+                        // 팝업 항목 선택 시 tbl_group_info 에서 group_name/group_code 조회
+                        onSelected: (String selectedGroupName) async {
                           debugPrint(
-                            'DrawerPageGrp onSelected result: $result',
+                            'DrawerPageGrp onSelected: $selectedGroupName',
                           );
-                          // value 형식: "code|codeName" (DB 그룹/기본 그룹 공통)
-                          final parts = result.split('|');
-                          final code = parts.isNotEmpty ? parts[0] : '';
-                          final codeName = parts.length > 1 ? parts[1] : code;
+                          // tbl_group_info 에서 group_name 으로 group_code 조회
+                          final groupInfo = await SQLHelper.getGroupInfoByName(
+                            selectedGroupName,
+                          );
+                          if (!mounted) return;
                           setState(() {
-                            classController.text = codeName;
-                            strSeletedClass = code;
+                            // group_name → classController 표시용 텍스트
+                            classController.text = selectedGroupName;
+                            // group_code → DB 저장용 코드
+                            strSeletedClass =
+                                groupInfo?['group_code']?.toString() ?? '';
                           });
                         },
+                        // 팝업 메뉴 항목: value 로 group_name(PK) 전달
                         itemBuilder: (BuildContext context) => _menuGroupList
                             .map(
                               (GroupItem item) => PopupMenuItem<String>(
-                                value: '${item.code}|${item.codeName}',
+                                value: item.codeName,
                                 child: Text(
                                   item.codeName,
                                   style: TextStyle(fontSize: 15.0),

@@ -1,74 +1,86 @@
-import 'package:app_wallet_app/common/app_constants.dart';
 import 'package:app_wallet_app/common/dic_service.dart';
-//import 'package:app_wallet_app/sub/PageMyCfgList.dart';
-import 'package:app_wallet_app/sub/PageMyUserBank.dart';
-import 'package:app_wallet_app/sub/PageMyUserDef.dart';
-import 'package:app_wallet_app/sub/PageMyUserEtc.dart';
-import 'package:app_wallet_app/sub/PageMyUserGov.dart';
-import 'package:app_wallet_app/sub/PageMyUserInstSys.dart';
-import 'package:app_wallet_app/sub/PageMyUserSns.dart';
+import 'package:app_wallet_app/sub/PageMyApps.dart';
+import 'package:app_wallet_app/sub/drawer_callback.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 /// "나의 앱" 탭 화면.
-/// 사용자가 직접 추가한 앱을 그룹별(전체/SNS/구글&폰앱/사용자/금융/기관)로 분류하여 PageView 로 표시.
+/// MgrAppWebPage 에서 전달받은 [groups](GroupItem 목록)을 기반으로
+/// PageView 를 동적으로 구성한다.
 ///
 /// 작업 순서:
-///   1. [initState]  - 그룹 드롭다운 목록 초기화, 하위 페이지 목록(_pages) 생성
-///                     (PageMyUserDef·PageMyUserSns·PageMyUserInstSys·PageMyUserEtc·PageMyUserBank·PageMyUserGov)
-///   2. [build]      - 상단 드롭다운(그룹 선택) + PageView(하위 페이지) 레이아웃 구성
-///   3. 드롭다운 변경 시 → [PageController.jumpToPage] 로 해당 페이지로 이동
-///   4. PageView 스와이프 시 → 드롭다운 값 동기화
-///   5. [dispose]    - PageController 자원 해제
+///   1. [initState]       - 드롭다운 목록·PageView 페이지 목록 초기화
+///   2. [_buildPages]     - groups 로부터 PageMyApps 위젯 목록 생성
+///                          (첫 번째 페이지만 isFirst: true → DB 초기화 수행)
+///   3. [build]           - 상단 드롭다운 + PageView 레이아웃 구성
+///   4. 드롭다운 변경 시  → PageController.jumpToPage 로 해당 페이지 이동
+///   5. PageView 스와이프 → 드롭다운 값 동기화
+///   6. [didUpdateWidget] - 부모에서 groups 가 바뀐 경우 드롭다운·페이지 갱신
+///   7. [dispose]         - PageController 자원 해제
 class TabMyAppPage extends StatefulWidget {
-  const TabMyAppPage({Key? key}) : super(key: key);
+  /// MgrAppWebPage 에서 tbl_group_info 로드 완료 후 전달하는 그룹 목록
+  final List<GroupItem> groups;
+
+  const TabMyAppPage({
+    Key? key,
+    this.groups = const [GroupItem('A', '전체')],
+  }) : super(key: key);
 
   @override
   State<TabMyAppPage> createState() => _TabMyAppPageState();
 }
 
 class _TabMyAppPageState extends State<TabMyAppPage> {
-  final List<String> pageList = kMyAppGroupList;
-  late String dropdownValue;
+  late List<GroupItem> _groups;
+  late String _dropdownValue;
   final PageController _pageController = PageController(initialPage: 0);
-
-  // ValueNotifier<int> _pageCountNotifier = ValueNotifier<int>(0);
-
   List<Widget> _pages = [];
 
   @override
   void initState() {
     super.initState();
-    dropdownValue = pageList[0];
-    _pages = [
-      PageMyUserDef(),
-      //      PageMyCfgList(),
-      PageMyUserSns(),
-      PageMyUserInstSys(),
-      PageMyUserEtc(),
-      PageMyUserBank(),
-      PageMyUserGov(),
-    ];
+    _groups = widget.groups;
+    _dropdownValue = _groups.first.codeName;
+    _buildPages();
+  }
 
-    // _pageController.addListener(() {
-    //   int? nextPage = _pageController.page?.round();
+  /// groups 목록으로부터 PageMyApps 위젯 목록을 생성.
+  /// 인덱스 0(첫 번째) 페이지만 isFirst: true 로 설정해 DB 초기화를 수행.
+  void _buildPages() {
+    _pages = _groups.asMap().entries.map((entry) {
+      return PageMyApps(
+        groupCode: entry.value.code,
+        groupName: entry.value.codeName,
+        appOrder: entry.value.order,
+        isFirst: entry.key == 0,
+      );
+    }).toList();
+  }
 
-    //   if (nextPage != null) {
-    //     String newDropdownValue = pageList[nextPage];
-
-    //     if (newDropdownValue != dropdownValue) {
-    //       setState(() {
-    //         dropdownValue = newDropdownValue;
-    //       });
-    //     }
-    //   }
-    // });
+  /// 부모(MgrAppWebPage)가 새 groups 를 전달할 때 드롭다운·페이지 목록 갱신.
+  /// 그룹 코드 목록이 실제로 바뀐 경우에만 갱신.
+  @override
+  void didUpdateWidget(TabMyAppPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final oldCodes = oldWidget.groups.map((g) => g.code).toList();
+    final newCodes = widget.groups.map((g) => g.code).toList();
+    if (!listEquals(oldCodes, newCodes) && widget.groups.isNotEmpty) {
+      setState(() {
+        _groups = widget.groups;
+        _buildPages();
+        // 현재 선택된 그룹명이 새 목록에 없으면 첫 번째로 초기화
+        if (!_groups.any((g) => g.codeName == _dropdownValue)) {
+          _dropdownValue = _groups.first.codeName;
+          _pageController.jumpToPage(0);
+        }
+      });
+    }
   }
 
   @override
   void dispose() {
     _pageController.dispose();
-    // _pageCountNotifier.dispose();
     super.dispose();
   }
 
@@ -78,81 +90,82 @@ class _TabMyAppPageState extends State<TabMyAppPage> {
 
     return Scaffold(
       body: SafeArea(
-        child: Center(
-          child: Column(
-            children: <Widget>[
-              Container(
-                // Container 추가
-                color: Colors.lightBlue[100], // 배경색을 변경합니다.
-                child: Row(
-                  children: [
-                    SizedBox(
-                      width: 250,
-                      height: 50,
-                      child: Center(
-                        child: Text(
-                          "나의 앱 리스트",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blue[900],
-                          ),
+        child: Column(
+          children: [
+            // ── 상단 그룹 드롭다운 바 ──────────────────────────
+            Container(
+              color: Colors.lightBlue[100],
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 250,
+                    height: 50,
+                    child: Center(
+                      child: Text(
+                        "나의 앱 리스트",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue[900],
                         ),
                       ),
                     ),
-                    SizedBox(width: 40), // SizedBox 추가하여 공간 생성
-                    Theme(
-                      data: ThemeData(
-                        canvasColor: Colors.blue[200],
-                        iconTheme: IconThemeData(color: Colors.white),
-                      ),
-                      child: DropdownButton<String>(
-                        value: dropdownValue,
-                        icon: Icon(Icons.arrow_downward),
-                        onChanged: (String? newValue) {
-                          if (newValue != null) {
-                            setState(() {
-                              dropdownValue = newValue;
-                              _pageController.jumpToPage(
-                                pageList.indexOf(newValue),
-                              );
-                            });
-                          }
-                        },
-                        items: pageList.map<DropdownMenuItem<String>>((
-                          String value,
-                        ) {
-                          return DropdownMenuItem<String>(
-                            value: value,
-                            child: Text(
-                              value,
-                              style: TextStyle(color: Colors.blue[900]),
-                            ),
-                          );
-                        }).toList(),
-                      ),
+                  ),
+                  const SizedBox(width: 40),
+                  Theme(
+                    data: ThemeData(
+                      canvasColor: Colors.blue[200],
+                      iconTheme:
+                          const IconThemeData(color: Colors.white),
                     ),
-                  ],
-                ),
+                    child: DropdownButton<String>(
+                      value: _dropdownValue,
+                      icon: const Icon(Icons.arrow_downward),
+                      onChanged: (String? newValue) {
+                        if (newValue == null) return;
+                        final idx = _groups.indexWhere(
+                          (g) => g.codeName == newValue,
+                        );
+                        if (idx < 0) return;
+                        setState(() {
+                          _dropdownValue = newValue;
+                          _pageController.jumpToPage(idx);
+                        });
+                      },
+                      items: _groups
+                          .map(
+                            (g) => DropdownMenuItem<String>(
+                              value: g.codeName,
+                              child: Text(
+                                g.codeName,
+                                style: TextStyle(color: Colors.blue[900]),
+                              ),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ),
+                ],
               ),
-              Expanded(
-                child: PageView.builder(
-                  controller: _pageController,
-                  itemCount: _pages.length,
-                  itemBuilder: (context, index) {
-                    dicService.totPage = _pages.length;
-                    dicService.currentPage = index;
-                    return _pages[index];
-                  },
-                  onPageChanged: (int pageIndex) {
-                    setState(() {
-                      dropdownValue = pageList[pageIndex];
-                    });
-                  },
-                ),
+            ),
+            // ── PageView ────────────────────────────────────────
+            Expanded(
+              child: PageView.builder(
+                controller: _pageController,
+                itemCount: _pages.length,
+                itemBuilder: (context, index) {
+                  dicService.totPage = _pages.length;
+                  dicService.currentPage = index;
+                  return _pages[index];
+                },
+                onPageChanged: (int pageIndex) {
+                  setState(() {
+                    _dropdownValue = _groups[pageIndex].codeName;
+                  });
+                },
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

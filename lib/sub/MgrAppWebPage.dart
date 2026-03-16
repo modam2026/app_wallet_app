@@ -44,13 +44,18 @@ class _MgrAppWebPageState extends State<MgrAppWebPage>
     GroupItem('g', '게임'),
   ];
 
-  /// 현재 시각을 AM/PM + 12시간제(hh:mm:ss) 형식의 문자열로 반환.
+  /// 요일(일~토) + AM/PM + 12시간제(hh:mm:ss) 형식의 문자열로 반환.
+  /// 예: "(일) AM 11:51:55"
   /// AppBar 타이틀에 1초마다 갱신되어 표시됨.
   String get _timeString {
+    const weekdays = ['월', '화', '수', '목', '금', '토', '일'];
+    final weekday = weekdays[_now.weekday - 1]; // 1=월, 7=일
     final h24 = _now.hour; // 0~23
     final prefix = h24 < 12 ? 'AM' : 'PM';
     final h12 = h24 % 12 == 0 ? 12 : h24 % 12;
-    return '$prefix ${h12.toString().padLeft(2, '0')}:${_now.minute.toString().padLeft(2, '0')}:${_now.second.toString().padLeft(2, '0')}';
+    final timePart =
+        '$prefix ${h12.toString().padLeft(2, '0')}:${_now.minute.toString().padLeft(2, '0')}:${_now.second.toString().padLeft(2, '0')}';
+    return '($weekday) $timePart';
   }
 
   /// Drawer 작업 완료 후 DicService 의 callbackStatus 를 true 로 설정하여 전체 화면을 갱신.
@@ -66,6 +71,29 @@ class _MgrAppWebPageState extends State<MgrAppWebPage>
   /// [_initInternalAppInfo] 를 await 로 순차 실행.
   Future<void> _initAsync() async {
     await _initInternalAppInfo();
+
+    // tbl_group_info 가 비어 있을 때만 기본 그룹 삽입 (중복 방지)
+    // group_code 는 makeIntrnAppListData 의 app_kind 값과 반드시 일치해야 함
+    final hasGroups = await SQLHelper.hasMyGroups();
+    if (!hasGroups) {
+      await SQLHelper.addGroupInfo(1,  "전체",       1,  "A");
+      await SQLHelper.addGroupInfo(2,  "구글앱",      1, "G"); // com.google.*
+      await SQLHelper.addGroupInfo(3,  "SNS",        1, "M"); // 인스타, 카카오톡 등
+      await SQLHelper.addGroupInfo(4,  "삼성일반앱",   1, "X"); // com.samsung.*
+      await SQLHelper.addGroupInfo(5,  "삼성시스템앱", 2, "X"); // com.sec.*
+      await SQLHelper.addGroupInfo(6,  "시스템", 1,  "S"); // com.android.*
+      await SQLHelper.addGroupInfo(7,  "기관",   1,  "I"); // kr.go.*
+      await SQLHelper.addGroupInfo(8,  "은행",   1,  "B"); // B01
+      await SQLHelper.addGroupInfo(9,  "카드",   2,  "B"); // B02
+      await SQLHelper.addGroupInfo(10, "증권",   3,  "B"); // B03
+      await SQLHelper.addGroupInfo(11, "KT",    1,   "C"); // C01
+      await SQLHelper.addGroupInfo(12, "SKT",   2,   "C"); // C02
+      await SQLHelper.addGroupInfo(13, "LGU+",  1,   "C"); // C03
+      await SQLHelper.addGroupInfo(14, "기타",   1,   "E");
+    }
+
+    // 그룹 삽입 완료 후 Drawer 그룹 목록 로드 (타이밍 문제 방지)
+    await _loadGroupNamesForTab(0);
   }
 
   @override
@@ -79,8 +107,7 @@ class _MgrAppWebPageState extends State<MgrAppWebPage>
         _now = DateTime.now();
       });
     });
-    _initAsync();
-    _loadGroupNamesForTab(0);
+    _initAsync(); // 내부에서 완료 후 _loadGroupNamesForTab(0) 호출
   }
 
   /// TabController 의 탭 전환 이벤트 리스너.
@@ -95,16 +122,24 @@ class _MgrAppWebPageState extends State<MgrAppWebPage>
   Future<void> _loadGroupNamesForTab(int tabIndex) async {
     List<GroupItem> list;
     if (tabIndex == 0 || tabIndex == 1) {
-      final names = await SQLHelper.getDistinctAppUserGroups();
-      list = names.isEmpty
+      // tbl_group_info 에서 group_name, group_code 조회
+      final groups = await SQLHelper.getAllGroupList();
+      list = groups.isEmpty
           ? [const GroupItem('', '그룹 없음')]
-          : names.map((s) => GroupItem(s, s)).toList();
+          : groups
+                .map(
+                  (g) => GroupItem(
+                    g['group_code'] ?? '', // code  → DB 저장용
+                    g['group_name'] ?? '', // codeName → 화면 표시용
+                    (int.tryParse(g['app_order']?.toString() ?? '1') ?? 1),
+                  ),
+                )
+                .toList();
     } else {
       list = const [];
     }
     if (mounted) {
       setState(() {
-        print("list: $list");
         _groupListForDrawer = list;
       });
     }
@@ -233,7 +268,20 @@ class _MgrAppWebPageState extends State<MgrAppWebPage>
       body: TabBarView(
         controller: _tabController,
         physics: NeverScrollableScrollPhysics(),
-        children: [TabMyAppPage(), TabAllAppPage(), TabWebPage()],
+        children: [
+          TabMyAppPage(
+            // _initAsync() 완료 후 채워진 GroupItem 목록을 직접 전달
+            groups: _groupListForDrawer.isEmpty
+                ? const [GroupItem('A', '전체')]
+                : _groupListForDrawer,
+          ),
+          TabAllAppPage(
+            groups: _groupListForDrawer.isEmpty
+                ? const [GroupItem('A', '전체')]
+                : _groupListForDrawer,
+          ),
+          TabWebPage(),
+        ],
       ),
       endDrawer: Drawer(
         child: SafeArea(

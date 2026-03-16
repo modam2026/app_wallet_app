@@ -22,7 +22,7 @@ import 'package:sqflite/sqflite.dart' as sql;
 ///  13. [changeMyGroupInfo]       - 앱 그룹 변경 (app_order, app_kind, app_user_group 업데이트)
 ///  14. [deleteMyIntrnAppInfo]    - 특정 앱 데이터 삭제
 class SQLHelper {
-  /// DB 최초 생성 시 tbl_my_application_info 테이블을 생성.
+  /// DB 최초 생성 시 tbl_my_application_info, tbl_group_info 테이블을 생성.
   /// [appMngmntDB] 의 onCreate 콜백에서만 호출됨.
   static Future<void> createIntrnAppTables(sql.Database database) async {
     await database.execute("""CREATE TABLE tbl_my_application_info (
@@ -44,6 +44,17 @@ class SQLHelper {
       is_fixed_app       INTEGER NOT NULL ,      
       use_period_at      TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now', 'utc')),
       createdAt          TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now', 'utc'))
+    )
+    """);
+
+    await database.execute("""CREATE TABLE tbl_group_info (
+      group_name         TEXT    NOT NULL PRIMARY KEY ,
+      group_order        TEXT    NOT NULL ,
+      app_order          TEXT    NOT NULL ,      
+      group_code         TEXT    NOT NULL ,
+      use_yn             TEXT    NOT NULL DEFAULT 'Y',      
+      use_period_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now', 'utc')),
+      createdAt          TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now', 'utc'))
     )
     """);
   }
@@ -75,6 +86,20 @@ class SQLHelper {
     final result = await db.rawQuery('''
       SELECT COUNT(*) AS cnt
         FROM tbl_my_application_info
+    ''');
+
+    final cnt = (result.first['cnt'] as int?) ?? 0;
+    return cnt > 0;
+  }
+
+  /// tbl_group_info 테이블에 데이터가 1건 이상 있으면 true, 없으면 false 반환.
+  /// "나의 앱" 화면 최초 진입 시 DB 초기화 여부 확인에 사용.
+  static Future<bool> hasMyGroups() async {
+    final db = await SQLHelper.appMngmntDB();
+
+    final result = await db.rawQuery('''
+      SELECT COUNT(*) AS cnt
+        FROM tbl_group_info
     ''');
 
     final cnt = (result.first['cnt'] as int?) ?? 0;
@@ -133,90 +158,112 @@ class SQLHelper {
       print("ERROR");
       return item;
     }
-    //COMPANY / INST
+
+    // 구글앱 (group_code = "G")
     if (strPackagePart1 == "com" && strPackagePart2 == "google") {
-      strAppOrder = "3";
-      strAppKind = "I";
-      strAppUserGroup = "I10";
+      strAppOrder = "1";
+      strAppKind = "G";
+      strAppUserGroup = "G01";
+
+      // 삼성 일반앱 (group_code = "X", order 1)
     } else if (strPackagePart1 == "com" && strPackagePart2 == "samsung") {
-      strAppOrder = "4";
-      strAppKind = "I";
-      strAppUserGroup = "I20";
+      strAppOrder = "1";
+      strAppKind = "X";
+      strAppUserGroup = "X01";
+
+      // 삼성 시스템앱 (group_code = "X", order 2)
     } else if (strPackagePart1 == "com" && strPackagePart2 == "sec") {
-      strAppOrder = "4";
-      strAppKind = "I";
-      strAppUserGroup = "I30";
-      // SYSTEM
+      strAppOrder = "2";
+      strAppKind = "X";
+      strAppUserGroup = "X02";
+
+      // 안드로이드 시스템 (group_code = "S")
     } else if (strPackagePart1 == "com" && strPackagePart2 == "android") {
-      strAppOrder = "9";
+      strAppOrder = "1";
       strAppKind = "S";
-      strAppUserGroup = "S1";
-      // 정보기관
-    } else if (strPackagePart1.contains("go") ||
-        strPackagePart2.contains("go")) {
+      strAppUserGroup = "S01";
+
+      // 정부기관 (group_code = "I") - kr.go.*
+    } else if (strPackagePart1 == "kr" && strPackagePart2 == "go") {
       strAppOrder = "1";
-      strAppKind = "U";
-      strAppUserGroup = "U01";
-      // 금융
+      strAppKind = "I";
+      strAppUserGroup = "I01";
+
+      // 은행
     } else if (strPackagePart2.contains("bank") ||
-        strPackagePart2 == "wr" ||
         strPackagePart3.contains("bank") ||
-        strPackagePart4.contains("bank")) {
+        strPackagePart4.contains("bank") ||
+        strPackagePart2 == "wr") {
       strAppOrder = "1";
-      strAppKind = "U";
-      strAppUserGroup = "U11";
+      strAppKind = "B";
+      strAppUserGroup = "B01";
+
+      // 증권
+    } else if (strPackagePart2.contains("sec") ||
+        strPackagePart2.contains("securities") ||
+        strPackagePart3.contains("securities") ||
+        strPackagePart2.contains("stock") ||
+        strPackagePart2.contains("invest")) {
+      strAppOrder = "3";
+      strAppKind = "B";
+      strAppUserGroup = "B03";
+
+      // 카드
     } else if (strPackagePart2.contains("card") ||
         strPackagePart3.contains("card") ||
-        strPackagePart4.contains("card")) {
+        strPackagePart2.contains("pay")) {
+      strAppOrder = "2";
+      strAppKind = "B";
+      strAppUserGroup = "B02";
+
+      // SNS
+    } else if (strPackagePart2.contains("instagram") ||
+        strPackagePart2.contains("facebook") ||
+        strPackagePart2.contains("twitter") ||
+        strPackagePart2.contains("discord") ||
+        strPackagePart2.contains("telegram") ||
+        strPackagePart3.contains("telegram") ||
+        strPackagePart2.contains("tiktok") ||
+        strPackagePart2.contains("musically") || // 틱톡
+        (strPackagePart2.contains("kakao") &&
+            strPackagePart3.contains("talk")) ||
+        (strPackagePart2.contains("naver") &&
+            strPackagePart3.contains("line")) ||
+        (strPackagePart2.contains("naver") &&
+            strPackagePart3.contains("band"))) {
       strAppOrder = "1";
-      strAppKind = "U";
-      strAppUserGroup = "U12";
-    } else if (strPackagePart2.contains("kbsec")) {
-      strAppOrder = "1";
-      strAppKind = "U";
-      strAppUserGroup = "U10";
-      // 커뮤니티
-    } else if (strPackagePart2.contains("kakao")) {
-      strAppOrder = "1";
-      strAppKind = "U";
-      strAppUserGroup = "U20";
-    } else if (strPackagePart2.contains("nhn")) {
-      strAppOrder = "1";
-      strAppKind = "U";
-      strAppUserGroup = "U21";
-    } else if (strPackagePart2.contains("daum")) {
-      strAppOrder = "1";
-      strAppKind = "U";
-      strAppUserGroup = "U22";
-    } else if (strPackagePart2.contains("netflix")) {
-      strAppOrder = "1";
-      strAppKind = "U";
-      strAppUserGroup = "U23";
+      strAppKind = "M"; // SNS (group_code = "M")
+      strAppUserGroup = "M01";
+
       // 통신
     } else if (strPackagePart2.contains("kt") ||
+        strPackagePart2 == "olleh" ||
         strPackagePart3.contains("kt")) {
       strAppOrder = "1";
-      strAppKind = "U";
-      strAppUserGroup = "U30";
+      strAppKind = "C";
+      strAppUserGroup = "C01";
+
+      // SKT
     } else if (strPackagePart2.contains("skt") ||
+        strPackagePart2.contains("sktelecom") ||
         strPackagePart2.contains("tms") ||
         strPackagePart3.contains("skt")) {
+      strAppOrder = "2";
+      strAppKind = "C";
+      strAppUserGroup = "C02";
+
+      // LGU+
+    } else if (strPackagePart2.contains("lguplus") ||
+        strPackagePart2.contains("lgu")) {
+      strAppOrder = "3";
+      strAppKind = "C";
+      strAppUserGroup = "C03";
+
+      // 기타 (group_code = "E")
+    } else {
       strAppOrder = "1";
-      strAppKind = "U";
-      strAppUserGroup = "U40";
-      // Microsoft
-    } else if (strPackagePart2.contains("microsoft") ||
-        strPackagePart3.contains("microsoft")) {
-      strAppOrder = "1";
-      strAppKind = "U";
-      strAppUserGroup = "U40";
-      // 사용자
-    } else if (strPackagePart2 != "google" &&
-        strPackagePart2 != "samsung" &&
-        strPackagePart2 != "android") {
-      strAppOrder = "1";
-      strAppKind = "U";
-      strAppUserGroup = "U90";
+      strAppKind = "E";
+      strAppUserGroup = "E01";
     }
 
     item["app_num"] = 0;
@@ -384,13 +431,7 @@ class SQLHelper {
        AND package_name = ?
     ''';
 
-    // Execute the query and return the result
-    int result = await db.rawUpdate(sql_update, [
-      maxNum,
-      1,
-      pAppName,
-      pPackageName,
-    ]);
+    await db.rawUpdate(sql_update, [maxNum, 1, pAppName, pPackageName]);
 
     // Update SQL query string
     sql_update = '''
@@ -398,8 +439,7 @@ class SQLHelper {
        SET app_use_period = ROUND(julianday(date('now')) - julianday(strftime('%Y-%m-%d', use_period_at)))
     ''';
 
-    // Execute the query and return the result
-    result = await db.rawUpdate(sql_update);
+    await db.rawUpdate(sql_update);
 
     String sqlAppUsePeriod = '''
             SELECT  app_num, app_name, package_name, app_use_period, is_fixed_app
@@ -482,35 +522,46 @@ class SQLHelper {
     return result;
   }
 
-  /// tbl_my_application_info 에서 중복 제거된 app_user_group 코드 목록을 오름차순으로 조회.
-  /// Drawer 그룹 선택 팝업([DrawerPageGrp])에 표시할 그룹 목록을 제공하는 데 사용.
-  static Future<List<String>> getDistinctAppUserGroups() async {
-    final appMngmntDB = await SQLHelper.appMngmntDB();
-    const String sql = '''
-      SELECT DISTINCT app_user_group FROM tbl_my_application_info
-      WHERE TRIM(app_user_group) != ''
-      ORDER BY app_user_group
+  /// tbl_group_info 에서 group_name, group_code, group_order, app_order 목록을 group_order 오름차순으로 조회.
+  /// use_yn = 'Y' 인 활성 그룹만 반환.
+  /// app_order: 앱 필터링 시 tbl_my_application_info.app_order 와 매칭에 사용
+  static Future<List<Map<String, dynamic>>> getAllGroupList() async {
+    final db = await SQLHelper.appMngmntDB();
+    const sql = '''
+      SELECT group_name, group_code, group_order, app_order
+        FROM tbl_group_info
+       WHERE TRIM(group_name) != ''
+         AND use_yn = 'Y'
+       ORDER BY CAST(group_order AS INTEGER)
     ''';
-    final rows = await appMngmntDB.rawQuery(sql);
-    return rows.map<String>((r) => r['app_user_group'] as String? ?? '').toList();
+    final rows = await db.rawQuery(sql);
+    return rows
+        .map<Map<String, dynamic>>(
+          (r) => {
+            'group_name': r['group_name'] as String? ?? '',
+            'group_code': r['group_code'] as String? ?? '',
+            'group_order': r['group_order'],
+            'app_order': r['app_order'],
+          },
+        )
+        .toList();
   }
 
   /// "나의 앱" 목록에 앱을 신규 추가. 이미 존재하면 사용 이력만 업데이트.
   ///
   /// 작업 순서:
   ///   1. appDataWithAll 에서 해당 앱 탐색
-  ///   2. DB 에 이미 존재하면 → [changeOpenStatusInfo] 호출 후 종료
+  ///   2. DB 에 이미 존재하면 → [changeOpenStatusInfo] 호출 후 null 반환
   ///   3. 없으면 → 현재 최대 app_num+1 을 새 app_num 으로 설정
   ///   4. pType == "OPN" 이면 app_opening=1, 아니면 0 으로 INSERT
-  ///   5. 삽입된 행의 id 반환
-  static Future<int> addMyIntrnAppInfo(
+  ///   5. 신규 추가 시 appDataWithMine 에 넣을 Map 반환, 기존 존재 시 null 반환
+  static Future<Map<String, dynamic>?> addMyIntrnAppInfo(
     String pAppName,
     String pPackageName,
     String pType,
   ) async {
     final appMngmntDB = await SQLHelper.appMngmntDB();
 
-    int result = 0;
     List<Map<String, dynamic>> tmpMaxCnt;
     CommonHelper commonHelper = CommonHelper.instance;
 
@@ -522,26 +573,23 @@ class SQLHelper {
               FROM tbl_my_application_info
              WHERE package_name = ? 
             ''';
-        // Execute the query and return the result
         tmpMaxCnt = await appMngmntDB.rawQuery(sqlExist, [pPackageName]);
 
-        int existCnt = tmpMaxCnt[0]["exist_cnt"];
+        final existCnt = tmpMaxCnt[0]["exist_cnt"] as int? ?? 0;
 
         if (existCnt > 0) {
-          print("pPackageName is existing $pPackageName");
           changeOpenStatusInfo(pAppName, pPackageName);
-          break;
+          return null;
         }
 
         String sql = '''
             SELECT COALESCE(MAX(app_num), 0) as max_num
               FROM tbl_my_application_info
             ''';
-        // Execute the query and return the result
         tmpMaxCnt = await appMngmntDB.rawQuery(sql);
 
-        int tmpNum = 0;
-        int maxNum = tmpMaxCnt[0]["max_num"];
+        final maxNum = tmpMaxCnt[0]["max_num"] as int? ?? 0;
+        final tmpNum = maxNum + 1;
 
         if (pType == "OPN") {
           _item["app_opening"] = 1;
@@ -549,9 +597,6 @@ class SQLHelper {
           _item["app_opening"] = 0;
         }
 
-        tmpNum = maxNum + 1;
-
-        // Create SQL query string
         sql = '''
               INSERT INTO tbl_my_application_info
               (app_num, app_order, app_kind, app_user_group, app_opening, app_use_period, app_name, package_name, package_part1, package_part2, package_part3, package_part4, package_part5, is_first_input, is_fixed_app)
@@ -559,8 +604,7 @@ class SQLHelper {
               (?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, 0, 0)
             ''';
 
-        // Execute the query and return the id of the inserted row
-        result = await appMngmntDB.rawInsert(sql, [
+        await appMngmntDB.rawInsert(sql, [
           tmpNum,
           _item["app_order"],
           _item["app_kind"],
@@ -575,11 +619,55 @@ class SQLHelper {
           _item["package_part5"],
         ]);
 
-        break;
+        // appDataWithMine 에 추가할 Map 생성 (원본 _item 수정 방지를 위해 복사)
+        final newMap = Map<String, dynamic>.from(_item);
+        newMap["app_num"] = tmpNum;
+        newMap["app_use_period"] = 0;
+        newMap["is_fixed_app"] = 0;
+        return newMap;
       }
     }
 
-    return result;
+    return null;
+  }
+
+  /// tbl_group_info 테이블에 그룹 정보를 추가.
+  /// [pGroupOrder] 순서(null 이면 자동), [pGroupName] 그룹명, [pGroupCode] 그룹 코드.
+  static Future<void> addGroupInfo(
+    int? pGroupOrder,
+    String pGroupName,
+    int? pAppOrder,
+    String pGroupCode,
+  ) async {
+    final db = await SQLHelper.appMngmntDB();
+
+    // pGroupOrder 가 null 이면 현재 등록된 그룹 수 + 1 로 자동 산출
+    final int resolvedOrder;
+    if (pGroupOrder != null) {
+      resolvedOrder = pGroupOrder;
+    } else {
+      final cntResult = await db.rawQuery(
+        'SELECT COUNT(*) AS cnt FROM tbl_group_info',
+      );
+      resolvedOrder = ((cntResult.first['cnt'] as int?) ?? 0) + 1;
+    }
+
+    const sql = '''
+      INSERT INTO tbl_group_info
+        (group_name, group_order, app_order, group_code, 
+         use_period_at, createdAt)
+      VALUES
+        (?, ?, ?, ?, 
+         strftime('%Y-%m-%dT%H:%M:%fZ', 'now', 'utc'),
+         strftime('%Y-%m-%dT%H:%M:%fZ', 'now', 'utc'))
+    ''';
+
+    await db.rawInsert(sql, [
+      pGroupName,
+      resolvedOrder.toString(),
+      pAppOrder,
+      pGroupCode,
+    ]);
   }
 
   /// 특정 앱(app_name + package_name) 이 DB 에 존재하면 true, 없으면 false 반환.
@@ -614,5 +702,27 @@ class SQLHelper {
     } else {
       return false;
     }
+  }
+
+  /// group_name 으로 tbl_group_info 를 조회하여 app_order, group_code 반환.
+  /// 일치하는 행이 없으면 null 반환.
+  /// 그룹 변경 시 앱에 저장할 app_order 값으로 사용됨.
+  static Future<Map<String, dynamic>?> getGroupInfoByName(
+    String pGroupName,
+  ) async {
+    final db = await SQLHelper.appMngmntDB();
+
+    final result = await db.rawQuery(
+      '''
+      SELECT app_order, group_code
+        FROM tbl_group_info
+       WHERE group_name = ?
+       LIMIT 1
+      ''',
+      [pGroupName],
+    );
+
+    if (result.isEmpty) return null;
+    return result.first;
   }
 }

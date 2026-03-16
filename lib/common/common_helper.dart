@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:app_wallet_app/common/AppCache.dart';
 import 'package:app_wallet_app/common/app_constants.dart';
 import 'package:app_wallet_app/common/sql_helper.dart';
@@ -23,6 +24,9 @@ class CommonHelper {
   List<Map<String, dynamic>> appDataWithUser = [];
   List<Map<String, dynamic>> appDataWithInst = [];
   List<Map<String, dynamic>> appDataWithSys = [];
+
+  /// "나의 앱" 목록 변경 시 증가. PageMyApps 가 이를 구독하여 갱신.
+  static final ValueNotifier<int> myAppsVersion = ValueNotifier(0);
 
   static CommonHelper? _instance;
   CommonHelper._();
@@ -124,22 +128,49 @@ class CommonHelper {
     return 0;
   }
 
+  /// "나의 앱" 목록에 앱을 추가. DB 삽입 후 appDataWithMine 메모리 캐시에도 반영.
+  ///
+  /// 작업 순서:
+  ///   1. [SQLHelper.addMyIntrnAppInfo] 호출
+  ///   2. 신규 삽입 시 반환된 Map 을 appDataWithMine 에 추가 후 정렬
+  ///   3. [myAppsVersion] 증가하여 "나의 앱" 탭 갱신 트리거
+  Future<void> addApp(CachedApplication app, String pType) async {
+    final newMap =
+        await SQLHelper.addMyIntrnAppInfo(app.appName, app.packageName, pType);
+    if (newMap == null) return;
+
+    appDataWithMine.add(newMap);
+    appDataWithMine.sort((a, b) {
+      final fixedCmp = b['is_fixed_app'].compareTo(a['is_fixed_app']);
+      if (fixedCmp != 0) return fixedCmp;
+      final periodCmp =
+          a['app_use_period'].compareTo(b['app_use_period']);
+      return periodCmp != 0
+          ? periodCmp
+          : b['app_num'].compareTo(a['app_num']);
+    });
+    myAppsVersion.value++;
+  }
+
   /// "나의 앱" 목록에서 특정 앱을 DB 와 메모리 모두에서 삭제.
   ///
   /// 작업 순서:
   ///   1. [SQLHelper.deleteMyIntrnAppInfo] 로 DB 에서 해당 앱 레코드 삭제
   ///   2. appDataWithMine 에서 해당 앱 인덱스 탐색 후 메모리 목록에서도 제거
+  ///   3. [myAppsVersion] 증가하여 "나의 앱" 탭 갱신 트리거
   void deleteApp(CachedApplication appWithIcon) {
     SQLHelper.deleteMyIntrnAppInfo(
       appWithIcon.appName,
       appWithIcon.packageName,
     );
 
-    int indexToRemove = appDataWithMine.indexWhere(
-      (app) => app["cached_application"].packageName == appWithIcon.packageName,
+    final indexToRemove = appDataWithMine.indexWhere(
+      (app) =>
+          app["cached_application"].packageName == appWithIcon.packageName,
     );
     if (indexToRemove != -1) {
       appDataWithMine.removeAt(indexToRemove);
+      myAppsVersion.value++;
     }
   }
 
@@ -148,6 +179,7 @@ class CommonHelper {
   /// 작업 순서:
   ///   1. [SQLHelper.fixMyIntrnAppInfo] 로 DB 의 is_fixed_app 값 0↔1 토글
   ///   2. appDataWithMine 에서 해당 앱 탐색 후 메모리 상의 is_fixed_app 값도 토글
+  ///   3. 정렬 후 [myAppsVersion] 증가하여 "나의 앱" 탭 갱신 (고정 앱이 상단에 표시)
   void fixingApp(CachedApplication appWithIcon) {
     SQLHelper.fixMyIntrnAppInfo(appWithIcon.appName, appWithIcon.packageName);
 
@@ -161,6 +193,17 @@ class CommonHelper {
       } else {
         appDataWithMine[indexToFix]["is_fixed_app"] = 0;
       }
+
+      appDataWithMine.sort((a, b) {
+        final fixedCmp = b['is_fixed_app'].compareTo(a['is_fixed_app']);
+        if (fixedCmp != 0) return fixedCmp;
+        final periodCmp =
+            a['app_use_period'].compareTo(b['app_use_period']);
+        return periodCmp != 0
+            ? periodCmp
+            : b['app_num'].compareTo(a['app_num']);
+      });
+      myAppsVersion.value++;
     }
   }
 
@@ -175,7 +218,7 @@ class CommonHelper {
     String pAppKind,
     String pAppUserGroup,
   ) async {
-    SQLHelper.changeMyGroupInfo(
+    await SQLHelper.changeMyGroupInfo(
       appWithIcon.appName,
       appWithIcon.packageName,
       pAppOrder,
@@ -191,6 +234,7 @@ class CommonHelper {
       appDataWithMine[indexToChange]["app_order"] = pAppOrder;
       appDataWithMine[indexToChange]["app_kind"] = pAppKind;
       appDataWithMine[indexToChange]["app_user_group"] = pAppUserGroup;
+      myAppsVersion.value++;
     }
   }
 
@@ -235,11 +279,15 @@ class CommonHelper {
       appDataWithMine[indexToChange]["app_num"] = iNum;
       appDataWithMine[indexToChange]["app_opening"] = 1;
     } else {
-      await SQLHelper.addMyIntrnAppInfo(
+      final newMap = await SQLHelper.addMyIntrnAppInfo(
         appWithIcon.appName,
         appWithIcon.packageName,
         "OPN",
       );
+      if (newMap != null) {
+        newMap["app_opening"] = 1;
+        appDataWithMine.add(newMap);
+      }
     }
 
     appDataWithMine.sort((a, b) {
@@ -264,26 +312,32 @@ class CommonHelper {
 
       return isFixedAppComparison;
     });
+    myAppsVersion.value++;
   }
 
   /// 앱 아이콘 롱프레스 시 그룹변경·고정·삭제 옵션 다이얼로그를 표시.
   ///
   /// 작업 순서:
-  ///   1. 그룹 드롭다운 초기값 및 목록(kMyAppGroupList) 설정
+  ///   1. tbl_group_info 에서 그룹 목록 조회 (다른 콤보박스와 동일한 소스)
   ///   2. showDialog 로 AlertDialog 표시 (StatefulBuilder 로 드롭다운 상태 관리)
   ///   3. "그룹 변경" 버튼 → 선택한 그룹명을 코드로 변환 후 [changeGroup] 호출
   ///   4. "앱 고정/풀기" 버튼 → [fixingApp] 호출 (is_fixed_app 0↔1 토글)
   ///   5. "앱 삭제" 버튼 → [deleteApp] 호출 (DB + 메모리 삭제)
   ///   6. 각 버튼 처리 후 [notifyStateChanged] 콜백으로 부모 위젯 화면 갱신
-  void showConfirmationDialog(
+  Future<void> showConfirmationDialog(
     CachedApplication appWithIcon,
     BuildContext context,
     VoidCallback notifyStateChanged,
-  ) {
-    // DropdownButton<String> 위젯의 상태를 저장하기 위한 변수를 추가합니다.
-    String dropdownValue = '전체';
-    // DropdownButton<String>에서 사용할 항목을 선언합니다.
-    final List<String> pageList = kMyAppGroupList;
+  ) async {
+    final groups = await SQLHelper.getAllGroupList();
+    final List<String> pageList = groups
+        .map((g) => g['group_name'] as String? ?? '')
+        .where((n) => n.isNotEmpty)
+        .toList();
+    final List<String> displayList =
+        pageList.isEmpty ? ['전체'] : pageList;
+
+    String dropdownValue = displayList.first;
 
     showDialog(
       context: context,
@@ -340,7 +394,7 @@ class CommonHelper {
                                 dropdownValue = newValue ?? '전체';
                               });
                             },
-                            items: pageList
+                            items: displayList
                                 .map<DropdownMenuItem<String>>(
                                   (String value) => DropdownMenuItem<String>(
                                     value: value,
@@ -373,31 +427,21 @@ class CommonHelper {
                       String strAppKind = "";
                       String strAppUserGroup = "";
 
-                      if (dropdownValue == 'SNS') {
-                        strAppOrder = "1";
-                        strAppKind = "U";
-                        strAppUserGroup = "U30";
-                        // 정보기관
-                      } else if (dropdownValue == '기관') {
-                        strAppOrder = "1";
-                        strAppKind = "U";
-                        strAppUserGroup = "U01";
-                        // 금융
-                      } else if (dropdownValue == '금융') {
-                        strAppOrder = "1";
-                        strAppKind = "U";
-                        strAppUserGroup = "U11";
-                        // 구글&폰앱
-                      } else if (dropdownValue == '구글&폰앱') {
-                        strAppOrder = "3";
-                        strAppKind = "I";
-                        strAppUserGroup = "I10";
-                        // 사용자(기타)
-                      } else if (dropdownValue == '사용자') {
-                        strAppOrder = "1";
-                        strAppKind = "U";
-                        strAppUserGroup = "U90";
+                      // tbl_group_info 에서 선택한 그룹명으로 조회 (app_order 사용)
+                      final groupInfo =
+                          await SQLHelper.getGroupInfoByName(
+                            dropdownValue,
+                          );
+
+                      if (groupInfo != null) {
+                        strAppOrder =
+                            groupInfo['app_order']?.toString() ?? "";
+                        strAppKind =
+                            groupInfo['group_code']?.toString() ?? "";
+                        strAppUserGroup =
+                            strAppKind + strAppOrder.padLeft(2, '0');
                       }
+
                       changeGroup(
                         appWithIcon,
                         strAppOrder,
@@ -405,6 +449,7 @@ class CommonHelper {
                         strAppUserGroup,
                       );
                       notifyStateChanged(); // state를 변경했음을 알림
+                      // 그룹 변경 완료 후 현재 BottomSheet(다이얼로그)를 닫고 이전 화면으로 복귀
                       Navigator.pop(context);
                     },
                   ),
@@ -428,6 +473,7 @@ class CommonHelper {
                     onPressed: () async {
                       fixingApp(appWithIcon);
                       notifyStateChanged(); // state를 변경했음을 알림
+                      // 앱 고정/풀기 완료 후 현재 BottomSheet(다이얼로그)를 닫고 이전 화면으로 복귀
                       Navigator.pop(context);
                     },
                   ),
@@ -449,6 +495,7 @@ class CommonHelper {
                     onPressed: () async {
                       deleteApp(appWithIcon);
                       notifyStateChanged(); // state를 변경했음을 알림
+                      // 앱 삭제 완료 후 현재 BottomSheet(다이얼로그)를 닫고 이전 화면으로 복귀
                       Navigator.pop(context);
                     },
                   ),
@@ -468,6 +515,7 @@ class CommonHelper {
                         ),
                     child: Text("닫기", style: TextStyle(fontSize: 18)),
                     onPressed: () async {
+                      // 아무 작업 없이 현재 BottomSheet(다이얼로그)를 닫고 이전 화면으로 복귀
                       Navigator.pop(context);
                     },
                   ),
