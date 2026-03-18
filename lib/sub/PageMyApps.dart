@@ -70,7 +70,8 @@ class _PageMyAppsState extends State<PageMyApps> {
   @override
   void didUpdateWidget(PageMyApps oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.groupCode != widget.groupCode) {
+    if (oldWidget.groupCode != widget.groupCode ||
+        oldWidget.appOrder != widget.appOrder) {
       setState(() {
         _appsFuture = _loadApps();
       });

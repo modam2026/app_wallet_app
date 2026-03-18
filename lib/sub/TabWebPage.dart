@@ -5,23 +5,26 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:app_wallet_app/common/dic_service.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:app_wallet_app/common/sql_web_helper.dart';
+import 'package:app_wallet_app/common/sql_helper.dart';
 
 /// "웹" 탭 화면.
 /// 사용자가 등록한 웹 사이트 목록을 카드 형태로 표시하고, 접속·순서 변경·수정 기능을 제공.
 ///
 /// 작업 순서:
 ///   1. [initState]        - [refreshWebUrls] 호출하여 DB 에서 웹사이트 목록 초기 로딩
-///   2. [refreshWebUrls]   - [SQLWebHelper.getWebInfos] 로 DB 조회 후 _captions 갱신 및 화면 재빌드
+///   2. [refreshWebUrls]   - [SQLHelper.getWebInfos] 로 DB 조회 후 _captions 갱신 및 화면 재빌드
 ///   3. [build]            - 웹사이트 카드 ListView 구성 (태그별 색상·이미지 다르게 표시)
-///   4. 카드 탭 시          - [SQLWebHelper.updateUsedCnt] 로 사용 횟수 업데이트 + [_launchUrl] 로 브라우저 실행
-///   5. 상단 이동 버튼 탭 시  - [SQLWebHelper.updateMaxUsedCnt] 로 해당 항목을 목록 맨 위로 이동
+///   4. 카드 탭 시          - [SQLHelper.updateUsedCnt] 로 사용 횟수 업데이트 + [_launchUrl] 로 브라우저 실행
+///   5. 상단 이동 버튼 탭 시  - [SQLHelper.updateMaxUsedCnt] 로 해당 항목을 목록 맨 위로 이동
 ///   6. 수정 버튼 탭 시      - endDrawer 열기 + [DrawerWebPage] 에 선택 항목 전달
 ///   7. [refreshThisPage]  - DicService 콜백 상태 갱신으로 전체 화면 재빌드 유도
 ///   8. [_launchUrl]       - url_launcher 로 외부 브라우저 실행
 ///   9. [dispose]          - TextEditingController 자원 해제
+/// "웹 등록" 버튼 클릭 시 부모(MgrAppWebPage)의 endDrawer를 열기 위한 콜백.
 class TabWebPage extends StatefulWidget {
-  const TabWebPage({Key? key}) : super(key: key);
+  final VoidCallback? onWebRegisterRequested;
+
+  const TabWebPage({Key? key, this.onWebRegisterRequested}) : super(key: key);
 
   @override
   State<TabWebPage> createState() => _TabWebPageState();
@@ -53,10 +56,10 @@ class _TabWebPageState extends State<TabWebPage> {
   /// DB 에서 웹사이트 목록을 다시 조회하여 _captions 를 갱신하고 화면을 재빌드.
   ///
   /// 작업 순서:
-  ///   1. [SQLWebHelper.getWebInfos] 로 DB 에서 웹사이트 목록 조회
+  ///   1. [SQLHelper.getWebInfos] 로 DB 에서 웹사이트 목록 조회
   ///   2. 위젯이 마운트 상태인지 확인 후 setState 로 _captions 갱신
   void refreshWebUrls() async {
-    var data = await SQLWebHelper.getWebInfos();
+    var data = await SQLHelper.getWebInfos();
     if (!mounted) return;
     setState(() {
       _captions = data;
@@ -118,18 +121,33 @@ class _TabWebPageState extends State<TabWebPage> {
           body: SafeArea(
             child: Column(
               children: [
-                SizedBox(
-                  width: 400,
-                  height: 50,
-                  child: Center(
-                    child: Text(
-                      "사이트 등록을 위해 상단 왼쪽에 위치한 버튼을 클릭하세요!\nClick on the button located at the top left.",
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold, // 텍스트를 굵게 만듭니다.
-                        color: Colors.red, // 텍스트 색상을 변경합니다.
+                Container(
+                  color: Colors.blue[100],
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '웹 리스트',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue[900],
+                        ),
                       ),
-                    ),
+                      TextButton.icon(
+                        icon: Icon(Icons.add, size: 20),
+                        label: Text('웹 등록'),
+                        onPressed: widget.onWebRegisterRequested != null
+                            ? () => widget.onWebRegisterRequested!()
+                            : null,
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.blue[900],
+                          textStyle:
+                              TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 Flexible(
@@ -200,7 +218,7 @@ class _TabWebPageState extends State<TabWebPage> {
                                     icon: Icon(Icons.vertical_align_top),
                                     onPressed: () async {
                                       final objMaxOdr =
-                                          await SQLWebHelper.getMaxUsedCnt();
+                                          await SQLHelper.getMaxUsedCnt();
 
                                       int iMaxOrder = 0;
 
@@ -208,7 +226,7 @@ class _TabWebPageState extends State<TabWebPage> {
                                         iMaxOrder = objMaxOdr[0]['max_order'];
                                       }
 
-                                      SQLWebHelper.updateMaxUsedCnt(
+                                      SQLHelper.updateMaxUsedCnt(
                                         _captions[index]['id'],
                                         iMaxOrder,
                                       );
@@ -230,7 +248,7 @@ class _TabWebPageState extends State<TabWebPage> {
                                 ],
                               ),
                               onTap: () async {
-                                SQLWebHelper.updateUsedCnt(
+                                SQLHelper.updateUsedCnt(
                                   _captions[index]['id'],
                                 );
                                 dicService.webData = _captions[index];

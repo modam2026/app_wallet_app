@@ -8,6 +8,7 @@ import 'package:app_wallet_app/sub/DrawerPageGrp.dart' as grp;
 import 'package:app_wallet_app/sub/TabAllAppPage.dart';
 import 'package:app_wallet_app/sub/TabMyAppPage.dart';
 import 'package:app_wallet_app/sub/TabWebPage.dart';
+import 'package:device_apps/device_apps.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -43,6 +44,8 @@ class _MgrAppWebPageState extends State<MgrAppWebPage>
     GroupItem('e', '가끔'),
     GroupItem('g', '게임'),
   ];
+  List<GroupItem> _groupListForGroupManagement = const [];
+  int _groupDrawerOpenKey = 0;
 
   /// 요일(일~토) + AM/PM + 12시간제(hh:mm:ss) 형식의 문자열로 반환.
   /// 예: "(일) AM 11:51:55"
@@ -58,8 +61,28 @@ class _MgrAppWebPageState extends State<MgrAppWebPage>
     return '($weekday) $timePart';
   }
 
-  /// Drawer 작업 완료 후 DicService 의 callbackStatus 를 true 로 설정하여 전체 화면을 갱신.
+  /// 그룹 관리 Drawer용 전체 그룹 목록 로드 (use_yn='N' 포함).
+  Future<void> _loadGroupListForGroupManagement() async {
+    final groups =
+        await SQLHelper.getAllGroupListForManagement();
+    if (!mounted) return;
+    final list = groups
+        .map(
+          (g) => GroupItem(
+            g['group_code'] as String? ?? '',
+            g['group_name'] as String? ?? '',
+            int.tryParse(g['app_order']?.toString() ?? '1') ?? 1,
+          ),
+        )
+        .toList();
+    setState(() => _groupListForGroupManagement = list);
+  }
+
+  /// Drawer 작업 완료 후 그룹 목록 재로드 및 DicService 갱신.
   void refreshThisPage() async {
+    await _loadGroupNamesForTab(_tabController.index);
+    await _loadGroupListForGroupManagement();
+    if (!mounted) return;
     final dicService = Provider.of<DicService>(context, listen: false);
     setState(() {
       dicService.callbackStatus = true;
@@ -162,37 +185,42 @@ class _MgrAppWebPageState extends State<MgrAppWebPage>
         centerTitle: true,
         toolbarHeight: kToolbarHeight + 10,
         iconTheme: IconThemeData(color: Colors.black),
-        title: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text.rich(
-              TextSpan(
-                text:
-                    '${_now.year.toString()}년 ${_now.month.toString().padLeft(2, '0')}월 ${_now.day.toString().padLeft(2, '0')}일',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                  fontFamily: 'DancingScript',
+        title: GestureDetector(
+          onTap: () async {
+            await DeviceApps.openApp('com.samsung.android.calendar');
+          },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text.rich(
+                TextSpan(
+                  text:
+                      '${_now.year.toString()}년 ${_now.month.toString().padLeft(2, '0')}월 ${_now.day.toString().padLeft(2, '0')}일',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    fontFamily: 'DancingScript',
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 2),
-            SizedBox(
-              width: 140,
-              child: Text(
-                _timeString,
-                style: TextStyle(
-                  color: Colors.blue.shade900,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                  fontFamily: 'DancingScript',
+              const SizedBox(height: 2),
+              SizedBox(
+                width: 140,
+                child: Text(
+                  _timeString,
+                  style: TextStyle(
+                    color: Colors.blue.shade900,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    fontFamily: 'DancingScript',
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-                textAlign: TextAlign.center,
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         // leading: TextButton(
         //   child: FittedBox(
@@ -216,31 +244,35 @@ class _MgrAppWebPageState extends State<MgrAppWebPage>
                 '그룹관리',
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
               ),
-              onPressed: () {
+              onPressed: () async {
+                await _loadGroupListForGroupManagement();
+                if (!mounted) return;
                 setState(() {
                   _isGroupDrawer = true;
+                  _groupDrawerOpenKey++;
                 });
                 Scaffold.of(context).openEndDrawer();
               },
               style: TextButton.styleFrom(foregroundColor: Colors.white70),
             ),
           ),
-          Builder(
-            builder: (context) => TextButton.icon(
-              icon: const Icon(Icons.add_box, color: Colors.white70),
-              label: const Text(
-                '웹등록',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-              ),
-              onPressed: () {
-                setState(() {
-                  _isGroupDrawer = false;
-                });
-                Scaffold.of(context).openEndDrawer();
-              },
-              style: TextButton.styleFrom(foregroundColor: Colors.white70),
-            ),
-          ),
+          // 상단 웹등록 버튼: 아래 서브헤더의 웹 등록 버튼으로 대체
+          // Builder(
+          //   builder: (context) => TextButton.icon(
+          //     icon: const Icon(Icons.add_box, color: Colors.white70),
+          //     label: const Text(
+          //       '웹등록',
+          //       style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+          //     ),
+          //     onPressed: () {
+          //       setState(() {
+          //         _isGroupDrawer = false;
+          //       });
+          //       Scaffold.of(context).openEndDrawer();
+          //     },
+          //     style: TextButton.styleFrom(foregroundColor: Colors.white70),
+          //   ),
+          // ),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(kToolbarHeight + 12),
@@ -265,23 +297,30 @@ class _MgrAppWebPageState extends State<MgrAppWebPage>
           ),
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        physics: NeverScrollableScrollPhysics(),
-        children: [
-          TabMyAppPage(
-            // _initAsync() 완료 후 채워진 GroupItem 목록을 직접 전달
-            groups: _groupListForDrawer.isEmpty
-                ? const [GroupItem('A', '전체')]
-                : _groupListForDrawer,
-          ),
-          TabAllAppPage(
-            groups: _groupListForDrawer.isEmpty
-                ? const [GroupItem('A', '전체')]
-                : _groupListForDrawer,
-          ),
-          TabWebPage(),
-        ],
+      body: Builder(
+        builder: (context) => TabBarView(
+          controller: _tabController,
+          physics: NeverScrollableScrollPhysics(),
+          children: [
+            TabMyAppPage(
+              // _initAsync() 완료 후 채워진 GroupItem 목록을 직접 전달
+              groups: _groupListForDrawer.isEmpty
+                  ? const [GroupItem('A', '전체')]
+                  : _groupListForDrawer,
+            ),
+            TabAllAppPage(
+              groups: _groupListForDrawer.isEmpty
+                  ? const [GroupItem('A', '전체')]
+                  : _groupListForDrawer,
+            ),
+            TabWebPage(
+              onWebRegisterRequested: () {
+                setState(() => _isGroupDrawer = false);
+                Scaffold.of(context).openEndDrawer();
+              },
+            ),
+          ],
+        ),
       ),
       endDrawer: Drawer(
         child: SafeArea(
@@ -291,7 +330,8 @@ class _MgrAppWebPageState extends State<MgrAppWebPage>
                 _isGroupDrawer
                     ? grp.DrawerPageGrp(
                         onItemSelected: refreshThisPage,
-                        groupList: _groupListForDrawer,
+                        groupList: _groupListForGroupManagement,
+                        openKey: _groupDrawerOpenKey,
                       )
                     : DrawerPage(onItemSelected: refreshThisPage),
               ],

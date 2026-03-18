@@ -4,7 +4,7 @@ import 'package:app_wallet_app/common/dic_service.dart';
 import 'package:app_wallet_app/sub/drawer_callback.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:app_wallet_app/common/sql_web_helper.dart';
+import 'package:app_wallet_app/common/sql_helper.dart';
 
 /// 웹 사이트를 신규 등록하는 Drawer(우측 패널) 페이지.
 ///
@@ -14,8 +14,8 @@ import 'package:app_wallet_app/common/sql_web_helper.dart';
 ///   3. 추가 버튼 onPressed:
 ///       a. URL 형식 유효성 검사 (RegExp)
 ///       b. 분류·사이트명·URL 미입력 여부 확인
-///       c. [SQLWebHelper.chkCaption] 으로 중복 URL 확인
-///       d. 이상 없으면 [SQLWebHelper.createWebInfo] 로 DB 저장
+///       c. [SQLHelper.chkCaption] 으로 중복 URL 확인
+///       d. 이상 없으면 [SQLHelper.createWebInfo] 로 DB 저장
 ///       e. Drawer 닫기 + [onItemSelected] 콜백으로 부모 화면 갱신
 ///   4. [dispose]    - 자원 해제
 class DrawerPage extends StatefulWidget {
@@ -34,6 +34,9 @@ class _DrawerPageState extends State<DrawerPage> {
   TextEditingController captionController = TextEditingController();
   TextEditingController webUrlController = TextEditingController();
 
+  /// URL 입력란 포커스. build() 내부에서 생성하면 리빌드 시 포커스가 유지되지 않음.
+  late FocusNode _webUrlFocusNode;
+
   // ----- AdMob: 로컬용 비활성화. 스토어 배포 시 주석 해제 -----
   // bool _isAdLoaded = false;
   // late BannerAd _bannerAd;
@@ -43,9 +46,28 @@ class _DrawerPageState extends State<DrawerPage> {
   @override
   void initState() {
     super.initState();
+    _webUrlFocusNode = FocusNode();
+    _webUrlFocusNode.addListener(_onWebUrlFocusChange);
     // WidgetsBinding.instance.addPostFrameCallback((_) {
     //   initAd();
     // });
+  }
+
+  void _onWebUrlFocusChange() {
+    if (!_webUrlFocusNode.hasFocus) {
+      final raw = webUrlController.text.trim();
+      final normalized = _normalizeUrl(raw);
+      if (!_urlPattern.hasMatch(normalized)) {
+        if (raw.isNotEmpty) {
+          webUrlController.text = "";
+          if (mounted) {
+            Provider.of<DicService>(context, listen: false).showCheckUrl();
+          }
+        }
+      } else {
+        webUrlController.text = normalized;
+      }
+    }
   }
 
   // void initAd() async {
@@ -86,8 +108,24 @@ class _DrawerPageState extends State<DrawerPage> {
   //   }
   // }
 
+  /// URL 문자열 정규화 (전각 문자, Zero-Width 문자 제거).
+  static String _normalizeUrl(String raw) => raw
+      .trim()
+      .replaceAll('\uFF0E', '.')
+      .replaceAll('\u3000', ' ')
+      .replaceAll(RegExp(r'[\u200B-\u200D\uFEFF\u200E\u202A-\u202E]'), '')
+      .trim();
+
+  static final RegExp _urlPattern = RegExp(
+    r'^(https?://)?[^/\s]+\.\S{2,}$',
+    caseSensitive: false,
+    multiLine: false,
+  );
+
   @override
   void dispose() {
+    _webUrlFocusNode.removeListener(_onWebUrlFocusChange);
+    _webUrlFocusNode.dispose();
     // _bannerAd.dispose(); // AdMob 비활성화 시 주석
     super.dispose();
   }
@@ -96,25 +134,6 @@ class _DrawerPageState extends State<DrawerPage> {
   Widget build(BuildContext context) {
     return Consumer<DicService>(
       builder: (context, dicService, child) {
-        // FocusNode를 생성합니다.
-        FocusNode focusNode = FocusNode();
-
-        // TextField가 포커스를 잃었는지 확인하기 위한 리스너를 추가합니다.
-        focusNode.addListener(() {
-          if (!focusNode.hasFocus) {
-            // TextField가 포커스를 잃었을 때 실행되는 코드입니다.
-            String value = webUrlController.text;
-            RegExp pattern = RegExp(
-              r'^[^/\s]+\.\S{2,}$',
-              caseSensitive: false,
-              multiLine: false,
-            );
-            if (!pattern.hasMatch(value)) {
-              webUrlController.text = "";
-              dicService.showCheckUrl();
-            }
-          }
-        });
         return SafeArea(
           child: SingleChildScrollView(
             child: Column(
@@ -357,7 +376,7 @@ class _DrawerPageState extends State<DrawerPage> {
                     controller: webUrlController,
                     keyboardType: TextInputType.multiline,
                     maxLines: 3,
-                    focusNode: focusNode, // 여기에 생성한 FocusNode를 지정합니다.
+                    focusNode: _webUrlFocusNode,
                     decoration: InputDecoration(
                       hintText:
                           "사이트 URL을 입력시 http 생략해 주세요 \n ex) https://www.google.com -> \n        www.google.com",
@@ -386,8 +405,9 @@ class _DrawerPageState extends State<DrawerPage> {
                       ), // 버튼 내부의 정렬을 중앙으로 설정
                     ),
                     onPressed: () async {
-                      String strCaptionCtrl = captionController.text;
-                      String strWebUrlCtrl = webUrlController.text;
+                      String strCaptionCtrl = captionController.text.trim();
+                      String strWebUrlCtrl =
+                          _normalizeUrl(webUrlController.text);
                       String? strTagCtrl = "";
 
                       switch (strSeletedClass) {
@@ -408,17 +428,11 @@ class _DrawerPageState extends State<DrawerPage> {
                           break;
                       }
 
-                      final chkData = await SQLWebHelper.chkCaption(
+                      final chkData = await SQLHelper.chkCaption(
                         strWebUrlCtrl,
                       );
 
-                      RegExp pattern = RegExp(
-                        r'^[^/\s]+\.\S{2,}$',
-                        caseSensitive: false,
-                        multiLine: false,
-                      );
-
-                      if (!pattern.hasMatch(strWebUrlCtrl)) {
+                      if (!_urlPattern.hasMatch(strWebUrlCtrl)) {
                         dicService.showCheckUrl();
                       } else if (strTagCtrl.isEmpty) {
                         dicService.showCheckItems("분류");
@@ -429,8 +443,18 @@ class _DrawerPageState extends State<DrawerPage> {
                       } else if (chkData.isNotEmpty) {
                         dicService.showExistStatus(strCaptionCtrl);
                       } else {
+                        // https:// 또는 http:// 접두사 제거 (indexOf로 위치 찾아 이후 문자열만 사용)
+                        final idxHttps = strWebUrlCtrl.indexOf('https://');
+                        final idxHttp = strWebUrlCtrl.indexOf('http://');
+                        if (idxHttps >= 0) {
+                          strWebUrlCtrl =
+                              strWebUrlCtrl.substring(idxHttps + 8);
+                        } else if (idxHttp >= 0) {
+                          strWebUrlCtrl =
+                              strWebUrlCtrl.substring(idxHttp + 7);
+                        }
                         // 새로운 웹사이트 최초 등록
-                        await SQLWebHelper.createWebInfo(
+                        await SQLHelper.createWebInfo(
                           strCaptionCtrl,
                           strWebUrlCtrl,
                           strTagCtrl,

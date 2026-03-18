@@ -173,7 +173,7 @@ AppBar 우측 상단 "그룹관리" 버튼 클릭
         ▼
 [DrawerPageGrp.dart] 추가 버튼 onPressed:
   ⑦ strTagCtrl = strSeletedClass (선택된 그룹 코드 사용)
-  ⑧ SQLWebHelper.chkCaption(strWebUrlCtrl) 호출
+  ⑧ SQLHelper.chkCaption(strWebUrlCtrl) 호출
      → tbl_web_info 에서 동일 URL 존재 여부 확인
         │
         ├─ URL 형식 불일치 → DicService.showCheckUrl() (토스트 메시지)
@@ -183,7 +183,7 @@ AppBar 우측 상단 "그룹관리" 버튼 클릭
         ├─ URL 중복 → DicService.showExistStatus() (토스트 메시지)
         │
         └─ 이상 없음:
-              ⑨ SQLWebHelper.createWebInfo(caption, webUrl, tag) 호출
+              ⑨ SQLHelper.createWebInfo(caption, webUrl, tag) 호출
                  → tbl_web_info 에 INSERT
                         │
                         ▼
@@ -200,7 +200,7 @@ AppBar 우측 상단 "그룹관리" 버튼 클릭
               [TabWebPage.dart] build() 에서
               ⑮ callbackStatus == true 감지
                  → refreshWebUrls() 호출
-                 → SQLWebHelper.getWebInfos() 로 DB 재조회
+                 → SQLHelper.getWebInfos() 로 DB 재조회
                  → _captions 갱신
                  → setState() → 웹 탭 화면 재빌드
 ```
@@ -218,8 +218,8 @@ AppBar 우측 상단 "그룹관리" 버튼 클릭
 | ⑤ | `DrawerPageGrp` | `_groupListForDrawer` (DB 에서 읽어온 그룹 목록) 를 팝업 메뉴 항목으로 변환 |
 | ⑥ | `DrawerPageGrp` | 그룹명 선택 → 사이트명 → URL 순서로 입력하는 UI 렌더링 |
 | ⑦ | `DrawerPageGrp` | 선택된 그룹 코드를 tag 값으로 사용 (예: 'd'=매일, 'U11'=금융) |
-| ⑧ | `SQLWebHelper` | `tbl_web_info` 에서 동일 URL 중복 여부 확인 |
-| ⑨ | `SQLWebHelper` | `tbl_web_info` 에 신규 웹사이트 INSERT |
+| ⑧ | `SQLHelper` | `tbl_web_info` 에서 동일 URL 중복 여부 확인 |
+| ⑨ | `SQLHelper` | `tbl_web_info` 에 신규 웹사이트 INSERT |
 | ⑩~⑪ | `DrawerPageGrp` | 입력창 초기화 후 Drawer 닫기 |
 | ⑫ | `DrawerPageGrp` | `onItemSelected` 콜백 호출 → 부모(`MgrAppWebPage`)에 작업 완료 알림 |
 | ⑬~⑭ | `MgrAppWebPage` | `DicService` 의 callbackStatus 를 true 로 설정하고 리스너들에게 알림 |
@@ -251,7 +251,7 @@ AppBar 우측 상단 "그룹관리" 버튼 클릭
 [SharedPreferences]          [SQLite: webinfo.db]       [SQLite: db_app_management.db]
   cached_apps                  tbl_web_info               tbl_my_application_info
        │                            │                              │
-       │ AppCache                   │ SQLWebHelper                 │ SQLHelper
+       │ AppCache                   │ SQLHelper                 │ SQLHelper
        │ getCachedApps()            │ getWebInfos()                │ getMyAppsFromDB()
        │ cacheAllApps()             │ createWebInfo()              │ addMyIntrnAppInfo()
        ▼                            ▼                              ▼

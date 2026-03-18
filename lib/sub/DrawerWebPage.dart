@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 // import 'package:google_mobile_ads/google_mobile_ads.dart'; // 로컬용 비활성화. 스토어 배포 시 복구
+import 'package:app_wallet_app/common/common_helper.dart';
 import 'package:app_wallet_app/common/dic_service.dart';
 import 'package:app_wallet_app/sub/drawer_callback.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:app_wallet_app/common/sql_web_helper.dart';
+import 'package:app_wallet_app/common/sql_helper.dart';
 
 /// 기존 웹 사이트를 수정하거나 삭제하는 Drawer(우측 패널) 페이지.
 ///
@@ -14,11 +15,11 @@ import 'package:app_wallet_app/common/sql_web_helper.dart';
 ///   3. 수정 버튼 onPressed:
 ///       a. URL 형식 유효성 검사 (RegExp)
 ///       b. 사이트명·URL 미입력 여부 확인
-///       c. [SQLWebHelper.chkCaption] 으로 중복 URL 확인
-///       d. 이상 없으면 [SQLWebHelper.editWebInfo] 로 DB 수정
+///       c. [SQLHelper.chkCaption] 으로 중복 URL 확인
+///       d. 이상 없으면 [SQLHelper.editWebInfo] 로 DB 수정
 ///       e. Drawer 닫기 + [onItemSelected] 콜백으로 부모 화면 갱신
 ///   4. 삭제 버튼 onPressed:
-///       a. [SQLWebHelper.deleteWebUrl] 로 DB 에서 해당 항목 삭제
+///       a. [SQLHelper.deleteWebUrl] 로 DB 에서 해당 항목 삭제
 ///       b. Drawer 닫기 + [onItemSelected] 콜백으로 부모 화면 갱신
 ///   5. [dispose]    - 컨트롤러 자원 해제 + [onItemSelected] 콜백 호출
 class DrawerWebPage extends StatefulWidget {
@@ -37,8 +38,10 @@ class DrawerWebPage extends StatefulWidget {
 
 class _DrawerWebPageState extends State<DrawerWebPage> {
   String? strSeletedClass = "";
+  final CommonHelper _commonHelper = CommonHelper.instance;
   TextEditingController captionController = TextEditingController();
   TextEditingController webUrlController = TextEditingController();
+  final FocusNode _urlFocusNode = FocusNode();
 
   // ----- AdMob: 로컬용 비활성화. 스토어 배포 시 주석 해제 -----
   // bool _isAdLoaded = false;
@@ -95,9 +98,24 @@ class _DrawerWebPageState extends State<DrawerWebPage> {
   //   }
   // }
 
+  /// URL 문자열 정규화 (전각 문자, Zero-Width 문자 제거).
+  static String _normalizeUrl(String raw) => raw
+      .trim()
+      .replaceAll('\uFF0E', '.')
+      .replaceAll('\u3000', ' ')
+      .replaceAll(RegExp(r'[\u200B-\u200D\uFEFF\u200E\u202A-\u202E]'), '')
+      .trim();
+
+  static final RegExp _urlPattern = RegExp(
+    r'^(https?://)?[^/\s]+\.\S{2,}$',
+    caseSensitive: false,
+    multiLine: false,
+  );
+
   @override
   void dispose() {
     // _bannerAd.dispose(); // AdMob 비활성화 시 주석
+    _urlFocusNode.dispose();
     webUrlController.dispose();
     captionController.dispose();
     super.dispose();
@@ -111,25 +129,6 @@ class _DrawerWebPageState extends State<DrawerWebPage> {
   Widget build(BuildContext context) {
     return Consumer<DicService>(
       builder: (context, dicService, child) {
-        // FocusNode를 생성합니다.
-        FocusNode focusNode = FocusNode();
-
-        // TextField가 포커스를 잃었는지 확인하기 위한 리스너를 추가합니다.
-        focusNode.addListener(() {
-          if (!focusNode.hasFocus) {
-            // TextField가 포커스를 잃었을 때 실행되는 코드입니다.
-            String value = webUrlController.text;
-            RegExp pattern = RegExp(
-              r'^[^/\s]+\.\S{2,}$',
-              caseSensitive: false,
-              multiLine: false,
-            );
-            if (!pattern.hasMatch(value)) {
-              webUrlController.text = "";
-              dicService.showCheckUrl();
-            }
-          }
-        });
         return SafeArea(
           child: SingleChildScrollView(
             child: Column(
@@ -252,7 +251,7 @@ class _DrawerWebPageState extends State<DrawerWebPage> {
                     controller: webUrlController,
                     keyboardType: TextInputType.multiline,
                     maxLines: 3,
-                    focusNode: focusNode, // 여기에 생성한 FocusNode를 지정합니다.
+                    focusNode: _urlFocusNode,
                     decoration: InputDecoration(
                       hintText: "사이트 URL을 입력하세요",
                       focusedBorder: OutlineInputBorder(
@@ -280,8 +279,9 @@ class _DrawerWebPageState extends State<DrawerWebPage> {
                       ), // 버튼 내부의 정렬을 중앙으로 설정
                     ),
                     onPressed: () async {
-                      String strCaptionCtrl = captionController.text;
-                      String strWebUrlCtrl = webUrlController.text;
+                      String strCaptionCtrl = captionController.text.trim();
+                      String strWebUrlCtrl =
+                          _normalizeUrl(webUrlController.text);
                       String? strTagCtrl = "";
 
                       switch (strSeletedClass) {
@@ -302,17 +302,10 @@ class _DrawerWebPageState extends State<DrawerWebPage> {
                           break;
                       }
 
-                      final chkData = await SQLWebHelper.chkCaption(
+                      final chkData = await SQLHelper.chkCaption(
                         strWebUrlCtrl,
                       );
-
-                      RegExp pattern = RegExp(
-                        r'^[^/\s]+\.\S{2,}$',
-                        caseSensitive: false,
-                        multiLine: false,
-                      );
-
-                      if (!pattern.hasMatch(strWebUrlCtrl)) {
+                      if (!_urlPattern.hasMatch(strWebUrlCtrl)) {
                         dicService.showCheckUrl();
                       } else if (strCaptionCtrl.isEmpty) {
                         dicService.showCheckItems("사이트명");
@@ -321,8 +314,17 @@ class _DrawerWebPageState extends State<DrawerWebPage> {
                       } else if (chkData.isNotEmpty) {
                         dicService.showExistStatus(strCaptionCtrl);
                       } else {
-                        // 새로운 웹사이트 최초 등록
-                        await SQLWebHelper.editWebInfo(
+                        // https:// 또는 http:// 접두사 제거 (indexOf로 위치 찾아 이후 문자열만 사용)
+                        final idxHttps = strWebUrlCtrl.indexOf('https://');
+                        final idxHttp = strWebUrlCtrl.indexOf('http://');
+                        if (idxHttps >= 0) {
+                          strWebUrlCtrl =
+                              strWebUrlCtrl.substring(idxHttps + 8);
+                        } else if (idxHttp >= 0) {
+                          strWebUrlCtrl =
+                              strWebUrlCtrl.substring(idxHttp + 7);
+                        }
+                        await SQLHelper.editWebInfo(
                           strWebUrlCtrl,
                           strTagCtrl,
                           widget.captionItem["id"],
@@ -370,7 +372,7 @@ class _DrawerWebPageState extends State<DrawerWebPage> {
                       ), // 버튼 내부의 정렬을 중앙으로 설정
                     ),
                     onPressed: () async {
-                      await SQLWebHelper.deleteWebUrl(widget.captionItem["id"]);
+                      await SQLHelper.deleteWebUrl(widget.captionItem["id"]);
                       Navigator.pop(context);
                       if (widget.onItemSelected != null) {
                         widget
@@ -393,6 +395,47 @@ class _DrawerWebPageState extends State<DrawerWebPage> {
                         ),
                       ],
                     ),
+                  ),
+                ),
+                Container(
+                  margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  width: MediaQuery.of(context).size.width - 32,
+                  height: 50,
+                  child: ElevatedButton.icon(
+                    icon: Icon(Icons.vpn_key, size: 22),
+                    label: Text(
+                      "로그인 정보",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue.shade50,
+                      foregroundColor: Colors.indigo.shade800,
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    onPressed: () async {
+                      final siteName = captionController.text.trim();
+                      final siteUrl = webUrlController.text.trim();
+                      if (siteName.isEmpty) {
+                        dicService.showCheckItems("사이트명");
+                        return;
+                      }
+                      if (siteUrl.isEmpty) {
+                        dicService.showCheckItems("사이트 URL");
+                        return;
+                      }
+                      if (!context.mounted) return;
+                      await _commonHelper.showLoginInfoDialogForWeb(
+                        context,
+                        packageName: siteUrl,
+                        appWebName: siteName,
+                      );
+                    },
                   ),
                 ),
               ],

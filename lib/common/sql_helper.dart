@@ -1,5 +1,6 @@
 import 'package:app_wallet_app/common/AppCache.dart';
 import 'package:app_wallet_app/common/common_helper.dart';
+import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart' as sql;
 //import 'package:device_apps/device_apps.dart';
 
@@ -77,6 +78,213 @@ class SQLHelper {
       },
     );
   }
+
+  // ================== webinfo.db (웹 사이트·로그인 정보) ================== //
+
+  static Future<void> _createWebTables(sql.Database database) async {
+    await database.execute("""CREATE TABLE tbl_web_info (
+      id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    	caption            TEXT    NOT NULL ,
+    	web_url            TEXT    NULL DEFAULT NULL ,
+    	tag                TEXT    NULL DEFAULT NULL ,
+      used_cnt           INTEGER NOT NULL DEFAULT 0 ,
+      createdAt    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP 
+    )
+    """);
+
+    await database.execute("""CREATE TABLE tbl_app_web_info (
+      id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+      web_url            TEXT    NOT NULL ,
+      app_web_name       TEXT    NOT NULL ,
+      username           TEXT    NULL DEFAULT NULL ,
+      password           TEXT    NULL DEFAULT NULL ,
+      memo               TEXT    NULL DEFAULT NULL ,
+      createdAt          TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now', 'utc')),
+      updatedAt          TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now', 'utc'))
+    )
+    """);
+  }
+
+  static Future<void> _createAppWebInfoTableIfMissing(
+    sql.Database database,
+  ) async {
+    await database.execute("""CREATE TABLE IF NOT EXISTS tbl_app_web_info (
+      id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+      web_url            TEXT    NOT NULL ,
+      app_web_name       TEXT    NOT NULL ,
+      username           TEXT    NULL DEFAULT NULL ,
+      password           TEXT    NULL DEFAULT NULL ,
+      memo               TEXT    NULL DEFAULT NULL ,
+      createdAt          TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now', 'utc')),
+      updatedAt          TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now', 'utc'))
+    )
+    """);
+  }
+
+  /// webinfo.db 열기. tbl_web_info, tbl_onboard_info, tbl_app_web_info 사용.
+  static Future<sql.Database> webDB() async {
+    return sql.openDatabase(
+      'webinfo.db',
+      version: 3,
+      onCreate: (sql.Database database, int version) async {
+        await _createWebTables(database);
+      },
+      onUpgrade: (sql.Database database, int oldVersion, int newVersion) async {
+        if (oldVersion < 3) {
+          await _createAppWebInfoTableIfMissing(database);
+        }
+      },
+    );
+  }
+
+  // ----- tbl_web_info -----
+  static Future<int> createWebInfo(
+    String? caption,
+    String? webUrl,
+    String? tag,
+  ) async {
+    final db = await SQLHelper.webDB();
+    final id = await db.rawInsert(
+      'INSERT OR REPLACE INTO tbl_web_info (caption, web_url, tag) VALUES (?, ?, ?)',
+      [caption, webUrl, tag],
+    );
+    return id;
+  }
+
+  static Future<int> editWebInfo(String? webUrl, String? tag, int id) async {
+    final db = await SQLHelper.webDB();
+    return db.rawUpdate(
+      'UPDATE tbl_web_info SET web_url = ?, tag = ? WHERE id = ?',
+      [webUrl, tag, id],
+    );
+  }
+
+  static Future<List<Map<String, dynamic>>> getWebInfos() async {
+    final db = await SQLHelper.webDB();
+    return db.rawQuery('''
+      SELECT * FROM tbl_web_info
+      ORDER BY used_cnt DESC,
+        CASE tag WHEN 'g' THEN 0 WHEN 'd' THEN 1 WHEN 'w' THEN 2 WHEN 'm' THEN 3 WHEN 'e' THEN 4 ELSE 5 END ASC,
+        createdAt DESC
+    ''');
+  }
+
+  static Future<List<Map<String, dynamic>>> getWebInfo(int id) async {
+    final db = await SQLHelper.webDB();
+    return db.rawQuery('SELECT * FROM tbl_web_info WHERE id = ? LIMIT 1', [id]);
+  }
+
+  static Future<List<Map<String, dynamic>>> chkCaption(String pWebUrl) async {
+    final db = await SQLHelper.webDB();
+    return db.query(
+      'tbl_web_info',
+      where: 'web_url = ?',
+      whereArgs: [pWebUrl],
+      limit: 1,
+    );
+  }
+
+  static Future<List<Map<String, dynamic>>> getMaxUsedCnt() async {
+    final db = await SQLHelper.webDB();
+    return db.rawQuery('SELECT Max(used_cnt) as max_order FROM tbl_web_info');
+  }
+
+  static Future<int> updateMaxUsedCnt(int id, int pMaxUsedCnt) async {
+    final db = await SQLHelper.webDB();
+    return db.rawUpdate(
+      'UPDATE tbl_web_info SET used_cnt = ? + 1 WHERE id = ?',
+      [pMaxUsedCnt, id],
+    );
+  }
+
+  static Future<int> updateUsedCnt(int id) async {
+    final db = await SQLHelper.webDB();
+    return db.rawUpdate(
+      'UPDATE tbl_web_info SET used_cnt = used_cnt + 1 WHERE id = ?',
+      [id],
+    );
+  }
+
+  static Future<void> deleteWebUrl(int id) async {
+    final db = await SQLHelper.webDB();
+    try {
+      await db.rawDelete('DELETE FROM tbl_web_info WHERE id = ?', [id]);
+    } catch (err) {
+      debugPrint("Something went wrong when deleting an item: $err");
+    }
+  }
+
+  // ----- tbl_onboard_info -----
+  static Future<int> createOnboardInfo(int? pIsOnboard) async {
+    final db = await SQLHelper.webDB();
+    return db.rawInsert(
+      'INSERT OR REPLACE INTO tbl_onboard_info (is_onboarded) VALUES (?)',
+      [pIsOnboard],
+    );
+  }
+
+  static Future<List<Map<String, dynamic>>> getOnboardInfo() async {
+    final db = await SQLHelper.webDB();
+    return db.rawQuery('SELECT is_onboarded FROM tbl_onboard_info LIMIT 1');
+  }
+
+  // ----- tbl_app_web_info (로그인 정보) -----
+  static Future<List<Map<String, dynamic>>> getAppWebLoginInfos(
+    String webUrl,
+  ) async {
+    final db = await SQLHelper.webDB();
+    return db.query(
+      'tbl_app_web_info',
+      where: 'web_url = ?',
+      whereArgs: [webUrl],
+      orderBy: 'updatedAt DESC',
+    );
+  }
+
+  static Future<void> saveAppWebLoginInfo({
+    int? id,
+    required String webUrl,
+    required String appWebName,
+    String? username,
+    String? password,
+    String? memo,
+  }) async {
+    final db = await SQLHelper.webDB();
+    final now = DateTime.now().toUtc().toIso8601String().replaceFirst(
+      '.000',
+      '',
+    );
+    if (id != null && id > 0) {
+      await db.update(
+        'tbl_app_web_info',
+        {
+          'username': username ?? '',
+          'password': password ?? '',
+          'memo': memo ?? '',
+          'updatedAt': now,
+        },
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+    } else {
+      await db.insert('tbl_app_web_info', {
+        'web_url': webUrl,
+        'app_web_name': appWebName,
+        'username': username ?? '',
+        'password': password ?? '',
+        'memo': memo ?? '',
+        'createdAt': now,
+        'updatedAt': now,
+      });
+    }
+  }
+
+  static Future<void> deleteAppWebLoginInfo(int id) async {
+    final db = await SQLHelper.webDB();
+    await db.delete('tbl_app_web_info', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // ================== //
 
   /// tbl_my_application_info 테이블에 데이터가 1건 이상 있으면 true, 없으면 false 반환.
   /// "나의 앱" 화면 최초 진입 시 DB 초기화 여부 확인에 사용.
@@ -532,7 +740,17 @@ class SQLHelper {
         FROM tbl_group_info
        WHERE TRIM(group_name) != ''
          AND use_yn = 'Y'
-       ORDER BY CAST(group_order AS INTEGER)
+       ORDER BY
+         CASE
+           WHEN group_code = 'A' AND CAST(app_order AS INTEGER) = 1 THEN 0
+           WHEN group_code = 'A' AND CAST(app_order AS INTEGER) > 1 THEN 1
+           ELSE 2
+         END,
+         CASE
+           WHEN group_code = 'A' AND CAST(app_order AS INTEGER) > 1
+             THEN CAST(app_order AS INTEGER)
+           ELSE CAST(group_order AS INTEGER)
+         END
     ''';
     final rows = await db.rawQuery(sql);
     return rows
@@ -545,6 +763,70 @@ class SQLHelper {
           },
         )
         .toList();
+  }
+
+  /// tbl_group_info 에서 모든 그룹 조회 (use_yn 무관).
+  /// 그룹 관리 Drawer에서 사용 안 함(use_yn='N') 그룹도 표시.
+  static Future<List<Map<String, dynamic>>>
+  getAllGroupListForManagement() async {
+    final db = await SQLHelper.appMngmntDB();
+    const sql = '''
+      SELECT group_name, group_code, group_order, app_order, use_yn
+        FROM tbl_group_info
+       WHERE TRIM(group_name) != ''
+       ORDER BY
+         CASE
+           WHEN group_code = 'A' AND CAST(app_order AS INTEGER) = 1 THEN 0
+           WHEN group_code = 'A' AND CAST(app_order AS INTEGER) > 1 THEN 1
+           ELSE 2
+         END,
+         CASE
+           WHEN group_code = 'A' AND CAST(app_order AS INTEGER) > 1
+             THEN CAST(app_order AS INTEGER)
+           ELSE CAST(group_order AS INTEGER)
+         END
+    ''';
+    final rows = await db.rawQuery(sql);
+    return rows
+        .map<Map<String, dynamic>>(
+          (r) => {
+            'group_name': r['group_name'] as String? ?? '',
+            'group_code': r['group_code'] as String? ?? '',
+            'group_order': r['group_order'],
+            'app_order': r['app_order'],
+            'use_yn': r['use_yn'] as String? ?? 'Y',
+          },
+        )
+        .toList();
+  }
+
+  /// 사용자 정의 그룹(group_code='A') 삭제.
+  /// group_code != 'A' 이면 삭제 불가. "전체" 그룹은 삭제 불가.
+  /// 해당 그룹에 속한 앱이 1건이라도 있으면 삭제 불가.
+  /// 반환: 'ok' 성공, 'not_user_group' A가 아님, 'has_apps' 앱 존재, 'not_found' 그룹 없음
+  static Future<String> deleteUserGroup(String pGroupName) async {
+    final db = await SQLHelper.appMngmntDB();
+    final groupInfo = await getGroupInfoByName(pGroupName);
+    if (groupInfo == null) return 'not_found';
+    if (pGroupName.trim() == '전체') return 'not_user_group';
+    final groupCode = groupInfo['group_code']?.toString() ?? '';
+    if (groupCode != 'A') return 'not_user_group';
+    final appOrder = groupInfo['app_order']?.toString() ?? '0';
+    final appUserGroup = groupCode + appOrder.padLeft(2, '0');
+    final cntResult = await db.rawQuery(
+      '''
+      SELECT COUNT(*) AS cnt FROM tbl_my_application_info
+       WHERE app_user_group = ?
+      ''',
+      [appUserGroup],
+    );
+    final cnt = (cntResult.first['cnt'] as int?) ?? 0;
+    if (cnt > 0) return 'has_apps';
+    await db.rawDelete(
+      'DELETE FROM tbl_group_info WHERE group_name = ? AND group_code = ?',
+      [pGroupName, groupCode],
+    );
+    return 'ok';
   }
 
   /// "나의 앱" 목록에 앱을 신규 추가. 이미 존재하면 사용 이력만 업데이트.
@@ -665,8 +947,59 @@ class SQLHelper {
     await db.rawInsert(sql, [
       pGroupName,
       resolvedOrder.toString(),
-      pAppOrder,
+      pAppOrder?.toString() ?? resolvedOrder.toString(),
       pGroupCode,
+    ]);
+  }
+
+  /// tbl_group_info 에서 MAX(app_order) 값을 조회. 없으면 0 반환.
+  static Future<int> getMaxAppOrderFromGroupInfo() async {
+    final db = await SQLHelper.appMngmntDB();
+    final result = await db.rawQuery('''
+      SELECT COALESCE(MAX(CAST(app_order AS INTEGER)), 0) AS max_order
+        FROM tbl_group_info
+      ''');
+    return (result.first['max_order'] as int?) ?? 0;
+  }
+
+  /// group_name 에 해당하는 행의 use_yn 을 Y↔N 토글.
+  /// 영향받은 행 수 반환 (0=해당 그룹 없음).
+  static Future<int> toggleGroupUseYn(String pGroupName) async {
+    final db = await SQLHelper.appMngmntDB();
+    const sql = '''
+      UPDATE tbl_group_info
+         SET use_yn = CASE WHEN TRIM(use_yn) = 'Y' THEN 'N' ELSE 'Y' END
+           , use_period_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now', 'utc')
+       WHERE group_name = ?
+    ''';
+    return db.rawUpdate(sql, [pGroupName]);
+  }
+
+  /// 사용자 정의 그룹을 tbl_group_info 에 신규 추가.
+  /// group_code='A', app_order=최대값+1, group_order=자동.
+  static Future<void> createUserGroup(String pGroupName) async {
+    final db = await SQLHelper.appMngmntDB();
+    final maxAppOrder = await getMaxAppOrderFromGroupInfo();
+    final newAppOrder = maxAppOrder + 1;
+
+    final cntResult = await db.rawQuery(
+      'SELECT COUNT(*) AS cnt FROM tbl_group_info',
+    );
+    final groupOrder = ((cntResult.first['cnt'] as int?) ?? 0) + 1;
+
+    const sql = '''
+      INSERT INTO tbl_group_info
+        (group_name, group_order, app_order, group_code,
+         use_period_at, createdAt)
+      VALUES
+        (?, ?, ?, 'A',
+         strftime('%Y-%m-%dT%H:%M:%fZ', 'now', 'utc'),
+         strftime('%Y-%m-%dT%H:%M:%fZ', 'now', 'utc'))
+    ''';
+    await db.rawInsert(sql, [
+      pGroupName,
+      groupOrder.toString(),
+      newAppOrder.toString(),
     ]);
   }
 
@@ -704,7 +1037,7 @@ class SQLHelper {
     }
   }
 
-  /// group_name 으로 tbl_group_info 를 조회하여 app_order, group_code 반환.
+  /// group_name 으로 tbl_group_info 를 조회하여 app_order, group_code, use_yn 반환.
   /// 일치하는 행이 없으면 null 반환.
   /// 그룹 변경 시 앱에 저장할 app_order 값으로 사용됨.
   static Future<Map<String, dynamic>?> getGroupInfoByName(
@@ -714,7 +1047,7 @@ class SQLHelper {
 
     final result = await db.rawQuery(
       '''
-      SELECT app_order, group_code
+      SELECT app_order, group_code, use_yn
         FROM tbl_group_info
        WHERE group_name = ?
        LIMIT 1

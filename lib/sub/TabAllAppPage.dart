@@ -109,16 +109,18 @@ class _TabAllAppPageState extends State<TabAllAppPage> {
                     ),
                   ),
                   const SizedBox(width: 40),
-                  Theme(
-                    data: ThemeData(
-                      canvasColor: Colors.blue[200],
-                      iconTheme:
-                          const IconThemeData(color: Colors.white),
-                    ),
-                    child: DropdownButton<String>(
-                      value: _dropdownValue,
-                      icon: const Icon(Icons.arrow_downward),
-                      onChanged: (String? newValue) {
+                  Expanded(
+                    child: Theme(
+                      data: ThemeData(
+                        canvasColor: Colors.blue[200],
+                        iconTheme:
+                            const IconThemeData(color: Colors.white),
+                      ),
+                      child: DropdownButton<String>(
+                        isExpanded: true,
+                        value: _dropdownValue,
+                        icon: const Icon(Icons.arrow_downward),
+                        onChanged: (String? newValue) {
                         if (newValue == null) return;
                         final idx = _groups.indexWhere(
                           (g) => g.codeName == newValue,
@@ -140,6 +142,7 @@ class _TabAllAppPageState extends State<TabAllAppPage> {
                             ),
                           )
                           .toList(),
+                      ),
                     ),
                   ),
                 ],

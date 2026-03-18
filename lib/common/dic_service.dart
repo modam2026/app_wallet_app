@@ -1,4 +1,4 @@
-import 'package:app_wallet_app/common/sql_web_helper.dart';
+import 'package:app_wallet_app/common/sql_helper.dart';
 //import 'package:device_apps/device_apps.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -18,7 +18,7 @@ class DicService extends ChangeNotifier {
   int currentPage = 0;
 
   Future<void> callbackRefreshWebUrls() async {
-    var data = await SQLWebHelper.getWebInfos();
+    var data = await SQLHelper.getWebInfos();
     captions = data;
     data = [];
     notifyListeners();

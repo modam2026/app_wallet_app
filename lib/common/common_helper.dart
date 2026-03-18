@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:app_wallet_app/common/AppCache.dart';
-import 'package:app_wallet_app/common/app_constants.dart';
 import 'package:app_wallet_app/common/sql_helper.dart';
 import 'package:device_apps/device_apps.dart';
 import 'package:flutter/material.dart';
@@ -360,13 +359,14 @@ class CommonHelper {
                 Divider(color: Colors.blueGrey),
               ],
             ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      "그룹",
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        "그룹",
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -385,6 +385,7 @@ class CommonHelper {
                         ),
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton<String>(
+                            isExpanded: true,
                             value: dropdownValue,
                             icon: Icon(Icons.arrow_downward),
                             iconSize: 24,
@@ -503,6 +504,37 @@ class CommonHelper {
                 SizedBox(height: 10),
                 SizedBox(
                   width: double.infinity,
+                  child: ElevatedButton.icon(
+                    icon: Icon(Icons.vpn_key, size: 22),
+                    label: Text(
+                      "로그인 정보",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue.shade50,
+                      foregroundColor: Colors.indigo.shade800,
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    onPressed: () async {
+                      if (!context.mounted) return;
+                      Navigator.of(context).pop(); // 변경사항 다이얼로그 닫기
+                      await showLoginInfoDialogForWeb(
+                        context,
+                        packageName: appWithIcon.packageName,
+                        appWebName: appWithIcon.appName,
+                      );
+                    },
+                  ),
+                ),
+                SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
                   child: ElevatedButton(
                     style:
                         ElevatedButton.styleFrom(
@@ -522,11 +554,257 @@ class CommonHelper {
                 ),
               ],
             ),
+          ),
           );
         },
       ),
     );
 
     notifyStateChanged(); // state를 변경했음을 알림
-  } // 메소드 끝
-} // 클래스 끝
+  }
+
+  /// 웹 사이트별 로그인 정보(아이디/비밀번호 등) 관리 다이얼로그를 표시.
+  Future<void> showLoginInfoDialogForWeb(
+    BuildContext context, {
+    required String packageName,
+    required String appWebName,
+  }) async {
+    if (!context.mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => _LoginInfoDialog(
+        webUrl: packageName,
+        appWebName: appWebName,
+      ),
+    );
+  }
+}
+
+/// 로그인 정보(아이디/비밀번호/메모) 저장·조회 다이얼로그.
+class _LoginInfoDialog extends StatefulWidget {
+  const _LoginInfoDialog({
+    required this.webUrl,
+    required this.appWebName,
+  });
+
+  final String webUrl;
+  final String appWebName;
+
+  @override
+  State<_LoginInfoDialog> createState() => _LoginInfoDialogState();
+}
+
+class _LoginInfoDialogState extends State<_LoginInfoDialog> {
+  List<Map<String, dynamic>> _items = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadItems();
+  }
+
+  Future<void> _loadItems() async {
+    setState(() => _loading = true);
+    final list =
+        await SQLHelper.getAppWebLoginInfos(widget.webUrl);
+    if (mounted) {
+      setState(() {
+        _items = list;
+        _loading = false;
+      });
+    }
+  }
+
+  Future<void> _showAddEditDialog({Map<String, dynamic>? item}) async {
+    final isEdit = item != null;
+    final usernameController =
+        TextEditingController(text: item?['username']?.toString() ?? '');
+    final passwordController =
+        TextEditingController(text: item?['password']?.toString() ?? '');
+    final memoController =
+        TextEditingController(text: item?['memo']?.toString() ?? '');
+
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(isEdit ? '로그인 정보 수정' : '로그인 정보 추가'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                controller: usernameController,
+                decoration: InputDecoration(
+                  labelText: '아이디/이메일',
+                  border: OutlineInputBorder(),
+                ),
+                textCapitalization: TextCapitalization.none,
+                keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.next,
+              ),
+              SizedBox(height: 12),
+              TextField(
+                controller: passwordController,
+                decoration: InputDecoration(
+                  labelText: '비밀번호',
+                  border: OutlineInputBorder(),
+                ),
+                obscureText: true,
+                textCapitalization: TextCapitalization.none,
+                textInputAction: TextInputAction.next,
+              ),
+              SizedBox(height: 12),
+              TextField(
+                controller: memoController,
+                decoration: InputDecoration(
+                  labelText: '메모 (선택)',
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 2,
+                textInputAction: TextInputAction.done,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text('취소'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              final username = usernameController.text.trim();
+              final password = passwordController.text.trim();
+              final memo = memoController.text.trim();
+              await SQLHelper.saveAppWebLoginInfo(
+                id: isEdit ? item['id'] as int? : null,
+                webUrl: widget.webUrl,
+                appWebName: widget.appWebName,
+                username: username.isEmpty ? null : username,
+                password: password.isEmpty ? null : password,
+                memo: memo.isEmpty ? null : memo,
+              );
+              if (ctx.mounted) Navigator.of(ctx).pop();
+              _loadItems();
+            },
+            child: Text('저장'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _confirmDelete(Map<String, dynamic> item) async {
+    final username = item['username']?.toString() ?? '(없음)';
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('삭제 확인'),
+        content: Text(
+          '아이디 "$username" 로그인 정보를 삭제할까요?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text('취소'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text('삭제'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && item['id'] != null) {
+      await SQLHelper.deleteAppWebLoginInfo(item['id'] as int);
+      _loadItems();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('로그인 정보 - ${widget.appWebName}'),
+      content: SizedBox(
+        width: 360,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'URL: ${widget.webUrl}',
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+            ),
+            SizedBox(height: 16),
+            if (_loading)
+              Center(child: CircularProgressIndicator())
+            else if (_items.isEmpty)
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 16),
+                child: Text(
+                  '저장된 로그인 정보가 없습니다.\n"추가" 버튼으로 저장하세요.',
+                  style: TextStyle(fontSize: 14),
+                  textAlign: TextAlign.center,
+                ),
+              )
+            else
+              ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: 300),
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: _items.length,
+                  itemBuilder: (ctx, i) {
+                    final it = _items[i];
+                    final username = it['username']?.toString() ?? '(없음)';
+                    final hasPw =
+                        (it['password']?.toString() ?? '').isNotEmpty;
+                    return Card(
+                      margin: EdgeInsets.only(bottom: 8),
+                      child: ListTile(
+                        title: Text(username),
+                        subtitle: hasPw
+                            ? Text('비밀번호 ****')
+                            : it['memo']?.toString().isNotEmpty == true
+                                ? Text(it['memo'] as String)
+                                : null,
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: Icon(Icons.edit, size: 20),
+                              onPressed: () => _showAddEditDialog(item: it),
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.delete, size: 20),
+                              onPressed: () => _confirmDelete(it),
+                            ),
+                          ],
+                        ),
+                        onTap: () => _showAddEditDialog(item: it),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: () => _showAddEditDialog(),
+              icon: Icon(Icons.add),
+              label: Text('추가'),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text('닫기'),
+        ),
+      ],
+    );
+  }
+}
