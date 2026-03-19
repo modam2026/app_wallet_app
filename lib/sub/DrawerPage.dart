@@ -378,8 +378,7 @@ class _DrawerPageState extends State<DrawerPage> {
                     maxLines: 3,
                     focusNode: _webUrlFocusNode,
                     decoration: InputDecoration(
-                      hintText:
-                          "사이트 URL을 입력시 http 생략해 주세요 \n ex) https://www.google.com -> \n        www.google.com",
+                      hintText: "ex) www.google.com",
                       focusedBorder: OutlineInputBorder(
                         borderSide: BorderSide(
                           width: 1,
@@ -406,8 +405,9 @@ class _DrawerPageState extends State<DrawerPage> {
                     ),
                     onPressed: () async {
                       String strCaptionCtrl = captionController.text.trim();
-                      String strWebUrlCtrl =
-                          _normalizeUrl(webUrlController.text);
+                      String strWebUrlCtrl = _normalizeUrl(
+                        webUrlController.text,
+                      );
                       String? strTagCtrl = "";
 
                       switch (strSeletedClass) {
@@ -428,9 +428,7 @@ class _DrawerPageState extends State<DrawerPage> {
                           break;
                       }
 
-                      final chkData = await SQLHelper.chkCaption(
-                        strWebUrlCtrl,
-                      );
+                      final chkData = await SQLHelper.chkCaption(strWebUrlCtrl);
 
                       if (!_urlPattern.hasMatch(strWebUrlCtrl)) {
                         dicService.showCheckUrl();
@@ -447,11 +445,9 @@ class _DrawerPageState extends State<DrawerPage> {
                         final idxHttps = strWebUrlCtrl.indexOf('https://');
                         final idxHttp = strWebUrlCtrl.indexOf('http://');
                         if (idxHttps >= 0) {
-                          strWebUrlCtrl =
-                              strWebUrlCtrl.substring(idxHttps + 8);
+                          strWebUrlCtrl = strWebUrlCtrl.substring(idxHttps + 8);
                         } else if (idxHttp >= 0) {
-                          strWebUrlCtrl =
-                              strWebUrlCtrl.substring(idxHttp + 7);
+                          strWebUrlCtrl = strWebUrlCtrl.substring(idxHttp + 7);
                         }
                         // 새로운 웹사이트 최초 등록
                         await SQLHelper.createWebInfo(
