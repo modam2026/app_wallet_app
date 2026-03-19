@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+﻿import 'package:flutter/foundation.dart';
 import 'package:app_wallet_app/common/AppCache.dart';
 import 'package:app_wallet_app/common/sql_helper.dart';
 import 'package:device_apps/device_apps.dart';
@@ -79,9 +79,8 @@ class CommonHelper {
     appData = await SQLHelper.initIntrnAppListData(pKind, pUserGroup, allApps);
 
     for (var _itemImmutable in appData) {
-      Map<String, dynamic> appDataMap = Map.from(
-        _itemImmutable,
-      ); // _itemImmutable을 변경 가능한 Map으로 변환
+      Map<String, dynamic> appDataMap = Map.from(_itemImmutable);
+      // _itemImmutable을 변경 가능한 Map으로 변환
 
       // Now we look up the app in the map, which is an O(1) operation
       var app = allAppsMap[appDataMap["package_name"]];
@@ -332,7 +331,7 @@ class CommonHelper {
         .map((g) => g['group_name'] as String? ?? '')
         .where((n) => n.isNotEmpty)
         .toList();
-    final List<String> displayList = pageList.isEmpty ? ['전체'] : pageList;
+    final List<String> displayList = pageList.isEmpty ? ['??'] : pageList;
 
     String dropdownValue = displayList.first;
 
@@ -349,7 +348,7 @@ class CommonHelper {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('   + 변경사항 ', style: TextStyle(fontSize: 20)),
+                      Text('   + 변경사항항 ', style: TextStyle(fontSize: 20)),
                       CloseButton(onPressed: () => Navigator.of(context).pop()),
                     ],
                   ),
@@ -364,7 +363,7 @@ class CommonHelper {
                   Row(
                     children: [
                       Text(
-                        "그룹",
+                        "그룹명",
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -420,7 +419,7 @@ class CommonHelper {
                               Colors.black87,
                             ), // 버튼의 텍스트 및 아이콘 색상을 변경
                           ),
-                      child: Text("그룹 변경", style: TextStyle(fontSize: 18)),
+                      child: Text("?? ??", style: TextStyle(fontSize: 18)),
                       onPressed: () async {
                         String strAppOrder = "";
                         String strAppKind = "";
@@ -458,7 +457,7 @@ class CommonHelper {
                     child: ElevatedButton(
                       style:
                           ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white54, // 버튼의 배경색을 변경
+                            backgroundColor: Colors.white54, // ????????? ???
                             padding: EdgeInsets.symmetric(vertical: 10),
                           ).copyWith(
                             foregroundColor: WidgetStateProperty.all<Color>(
@@ -489,7 +488,7 @@ class CommonHelper {
                               Colors.black87,
                             ), // 버튼의 텍스트 및 아이콘 색상을 변경
                           ),
-                      child: Text("앱 삭제", style: TextStyle(fontSize: 18)),
+                      child: Text("? ??", style: TextStyle(fontSize: 18)),
                       onPressed: () async {
                         deleteApp(appWithIcon);
                         notifyStateChanged(); // state를 변경했음을 알림
@@ -504,7 +503,7 @@ class CommonHelper {
                     child: ElevatedButton.icon(
                       icon: Icon(Icons.vpn_key, size: 22),
                       label: Text(
-                        "로그인 정보",
+                        "??? ??",
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
@@ -560,7 +559,7 @@ class CommonHelper {
     notifyStateChanged(); // state를 변경했음을 알림
   }
 
-  /// 로그인 정보 추가/수정 다이얼로그 표시 (공통).
+  /// 웹 사이트별 로그인 정보(아이디/비밀번호 등) 관리 다이얼로그를 표시.
   static Future<void> showAddEditLoginInfoDialog(
     BuildContext context, {
     required String packageName,
@@ -585,7 +584,7 @@ class CommonHelper {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: Text(isEdit ? '로그인 정보 수정' : '로그인 정보 추가'),
+          title: Text(isEdit ? '로그인 수정' : '로그인 추가'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -594,7 +593,7 @@ class CommonHelper {
                 TextField(
                   controller: usernameController,
                   decoration: InputDecoration(
-                    labelText: '아이디/이메일',
+                    labelText: '아이디/메일',
                     border: OutlineInputBorder(),
                   ),
                   textCapitalization: TextCapitalization.none,
@@ -623,50 +622,48 @@ class CommonHelper {
                   textCapitalization: TextCapitalization.none,
                   textInputAction: TextInputAction.next,
                 ),
-              SizedBox(height: 12),
-              TextField(
-                controller: memoController,
-                decoration: InputDecoration(
-                  labelText: '메모 (선택)',
-                  border: OutlineInputBorder(),
+                SizedBox(height: 12),
+                TextField(
+                  controller: memoController,
+                  decoration: InputDecoration(
+                    labelText: '메모 입력',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 2,
+                  textInputAction: TextInputAction.done,
                 ),
-                maxLines: 2,
-                textInputAction: TextInputAction.done,
-              ),
-            ],
+              ],
+            ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text('취소'),
+            ),
+            FilledButton(
+              onPressed: () async {
+                final username = usernameController.text.trim();
+                final password = passwordController.text.trim();
+                final memo = memoController.text.trim();
+                await SQLHelper.saveAppWebLoginInfo(
+                  id: isEdit ? item!['id'] as int? : null,
+                  webUrl: packageName,
+                  appWebName: appWebName,
+                  username: username.isEmpty ? null : username,
+                  password: password.isEmpty ? null : password,
+                  memo: memo.isEmpty ? null : memo,
+                );
+                if (ctx.mounted) Navigator.of(ctx).pop();
+                onSaved?.call();
+              },
+              child: Text('저장'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: Text('취소'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              final username = usernameController.text.trim();
-              final password = passwordController.text.trim();
-              final memo = memoController.text.trim();
-              await SQLHelper.saveAppWebLoginInfo(
-                id: isEdit ? item!['id'] as int? : null,
-                webUrl: packageName,
-                appWebName: appWebName,
-                username: username.isEmpty ? null : username,
-                password: password.isEmpty ? null : password,
-                memo: memo.isEmpty ? null : memo,
-              );
-              if (ctx.mounted) Navigator.of(ctx).pop();
-              onSaved?.call();
-            },
-            child: Text('저장'),
-          ),
-        ],
       ),
     );
   }
 
-  /// 웹 사이트별 로그인 정보 추가/수정 다이얼로그 표시.
-  /// 저장된 항목이 있으면 해당 아이디/비밀번호를 폼에 바로 채워서 표시.
-  /// 없으면 빈 폼으로 추가 모드.
   Future<void> showLoginInfoDialogForWeb(
     BuildContext context, {
     required String packageName,
