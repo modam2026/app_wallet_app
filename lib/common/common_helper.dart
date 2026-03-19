@@ -29,6 +29,7 @@ class CommonHelper {
 
   static CommonHelper? _instance;
   CommonHelper._();
+
   /// 싱글톤 인스턴스를 반환. 최초 호출 시 인스턴스를 생성하고 이후에는 동일 인스턴스 재사용.
   static CommonHelper get instance {
     return _instance ??= CommonHelper._();
@@ -134,19 +135,19 @@ class CommonHelper {
   ///   2. 신규 삽입 시 반환된 Map 을 appDataWithMine 에 추가 후 정렬
   ///   3. [myAppsVersion] 증가하여 "나의 앱" 탭 갱신 트리거
   Future<void> addApp(CachedApplication app, String pType) async {
-    final newMap =
-        await SQLHelper.addMyIntrnAppInfo(app.appName, app.packageName, pType);
+    final newMap = await SQLHelper.addMyIntrnAppInfo(
+      app.appName,
+      app.packageName,
+      pType,
+    );
     if (newMap == null) return;
 
     appDataWithMine.add(newMap);
     appDataWithMine.sort((a, b) {
       final fixedCmp = b['is_fixed_app'].compareTo(a['is_fixed_app']);
       if (fixedCmp != 0) return fixedCmp;
-      final periodCmp =
-          a['app_use_period'].compareTo(b['app_use_period']);
-      return periodCmp != 0
-          ? periodCmp
-          : b['app_num'].compareTo(a['app_num']);
+      final periodCmp = a['app_use_period'].compareTo(b['app_use_period']);
+      return periodCmp != 0 ? periodCmp : b['app_num'].compareTo(a['app_num']);
     });
     myAppsVersion.value++;
   }
@@ -164,8 +165,7 @@ class CommonHelper {
     );
 
     final indexToRemove = appDataWithMine.indexWhere(
-      (app) =>
-          app["cached_application"].packageName == appWithIcon.packageName,
+      (app) => app["cached_application"].packageName == appWithIcon.packageName,
     );
     if (indexToRemove != -1) {
       appDataWithMine.removeAt(indexToRemove);
@@ -196,8 +196,7 @@ class CommonHelper {
       appDataWithMine.sort((a, b) {
         final fixedCmp = b['is_fixed_app'].compareTo(a['is_fixed_app']);
         if (fixedCmp != 0) return fixedCmp;
-        final periodCmp =
-            a['app_use_period'].compareTo(b['app_use_period']);
+        final periodCmp = a['app_use_period'].compareTo(b['app_use_period']);
         return periodCmp != 0
             ? periodCmp
             : b['app_num'].compareTo(a['app_num']);
@@ -333,8 +332,7 @@ class CommonHelper {
         .map((g) => g['group_name'] as String? ?? '')
         .where((n) => n.isNotEmpty)
         .toList();
-    final List<String> displayList =
-        pageList.isEmpty ? ['전체'] : pageList;
+    final List<String> displayList = pageList.isEmpty ? ['전체'] : pageList;
 
     String dropdownValue = displayList.first;
 
@@ -367,194 +365,193 @@ class CommonHelper {
                     children: [
                       Text(
                         "그룹",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    SizedBox(width: 10),
-                    Expanded(
-                      child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 10.0),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8.0),
-                          border: Border.all(
-                            color: Theme.of(context).primaryColor,
-                            width: 1.0,
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 10.0),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8.0),
+                            border: Border.all(
+                              color: Theme.of(context).primaryColor,
+                              width: 1.0,
+                            ),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              isExpanded: true,
+                              value: dropdownValue,
+                              icon: Icon(Icons.arrow_downward),
+                              iconSize: 24,
+                              elevation: 16,
+                              onChanged: (String? newValue) {
+                                setState(() {
+                                  dropdownValue = newValue ?? '전체';
+                                });
+                              },
+                              items: displayList
+                                  .map<DropdownMenuItem<String>>(
+                                    (String value) => DropdownMenuItem<String>(
+                                      value: value,
+                                      child: Text(value),
+                                    ),
+                                  )
+                                  .toList(),
+                            ),
                           ),
                         ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            isExpanded: true,
-                            value: dropdownValue,
-                            icon: Icon(Icons.arrow_downward),
-                            iconSize: 24,
-                            elevation: 16,
-                            onChanged: (String? newValue) {
-                              setState(() {
-                                dropdownValue = newValue ?? '전체';
-                              });
-                            },
-                            items: displayList
-                                .map<DropdownMenuItem<String>>(
-                                  (String value) => DropdownMenuItem<String>(
-                                    value: value,
-                                    child: Text(value),
-                                  ),
-                                )
-                                .toList(),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style:
+                          ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white38, // 버튼의 배경색을 변경
+                            padding: EdgeInsets.symmetric(vertical: 10),
+                          ).copyWith(
+                            foregroundColor: WidgetStateProperty.all<Color>(
+                              Colors.black87,
+                            ), // 버튼의 텍스트 및 아이콘 색상을 변경
                           ),
+                      child: Text("그룹 변경", style: TextStyle(fontSize: 18)),
+                      onPressed: () async {
+                        String strAppOrder = "";
+                        String strAppKind = "";
+                        String strAppUserGroup = "";
+
+                        // tbl_group_info 에서 선택한 그룹명으로 조회 (app_order 사용)
+                        final groupInfo = await SQLHelper.getGroupInfoByName(
+                          dropdownValue,
+                        );
+
+                        if (groupInfo != null) {
+                          strAppOrder =
+                              groupInfo['app_order']?.toString() ?? "";
+                          strAppKind =
+                              groupInfo['group_code']?.toString() ?? "";
+                          strAppUserGroup =
+                              strAppKind + strAppOrder.padLeft(2, '0');
+                        }
+
+                        changeGroup(
+                          appWithIcon,
+                          strAppOrder,
+                          strAppKind,
+                          strAppUserGroup,
+                        );
+                        notifyStateChanged(); // state를 변경했음을 알림
+                        // 그룹 변경 완료 후 현재 BottomSheet(다이얼로그)를 닫고 이전 화면으로 복귀
+                        Navigator.pop(context);
+                      },
+                    ),
+                  ),
+                  SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style:
+                          ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white54, // 버튼의 배경색을 변경
+                            padding: EdgeInsets.symmetric(vertical: 10),
+                          ).copyWith(
+                            foregroundColor: WidgetStateProperty.all<Color>(
+                              Colors.black87,
+                            ), // 버튼의 텍스트 및 아이콘 색상을 변경
+                          ),
+                      child: appWithIcon.isFixedApp == '1'
+                          ? Text("앱 풀기", style: TextStyle(fontSize: 18))
+                          : Text("앱 고정", style: TextStyle(fontSize: 18)),
+                      onPressed: () async {
+                        fixingApp(appWithIcon);
+                        notifyStateChanged(); // state를 변경했음을 알림
+                        // 앱 고정/풀기 완료 후 현재 BottomSheet(다이얼로그)를 닫고 이전 화면으로 복귀
+                        Navigator.pop(context);
+                      },
+                    ),
+                  ),
+                  SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style:
+                          ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white60, // 버튼의 배경색을 변경
+                            padding: EdgeInsets.symmetric(vertical: 10),
+                          ).copyWith(
+                            foregroundColor: WidgetStateProperty.all<Color>(
+                              Colors.black87,
+                            ), // 버튼의 텍스트 및 아이콘 색상을 변경
+                          ),
+                      child: Text("앱 삭제", style: TextStyle(fontSize: 18)),
+                      onPressed: () async {
+                        deleteApp(appWithIcon);
+                        notifyStateChanged(); // state를 변경했음을 알림
+                        // 앱 삭제 완료 후 현재 BottomSheet(다이얼로그)를 닫고 이전 화면으로 복귀
+                        Navigator.pop(context);
+                      },
+                    ),
+                  ),
+                  SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      icon: Icon(Icons.vpn_key, size: 22),
+                      label: Text(
+                        "로그인 정보",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style:
-                        ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white38, // 버튼의 배경색을 변경
-                          padding: EdgeInsets.symmetric(vertical: 10),
-                        ).copyWith(
-                          foregroundColor: WidgetStateProperty.all<Color>(
-                            Colors.black87,
-                          ), // 버튼의 텍스트 및 아이콘 색상을 변경
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue.shade50,
+                        foregroundColor: Colors.indigo.shade800,
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                    child: Text("그룹 변경", style: TextStyle(fontSize: 18)),
-                    onPressed: () async {
-                      String strAppOrder = "";
-                      String strAppKind = "";
-                      String strAppUserGroup = "";
-
-                      // tbl_group_info 에서 선택한 그룹명으로 조회 (app_order 사용)
-                      final groupInfo =
-                          await SQLHelper.getGroupInfoByName(
-                            dropdownValue,
-                          );
-
-                      if (groupInfo != null) {
-                        strAppOrder =
-                            groupInfo['app_order']?.toString() ?? "";
-                        strAppKind =
-                            groupInfo['group_code']?.toString() ?? "";
-                        strAppUserGroup =
-                            strAppKind + strAppOrder.padLeft(2, '0');
-                      }
-
-                      changeGroup(
-                        appWithIcon,
-                        strAppOrder,
-                        strAppKind,
-                        strAppUserGroup,
-                      );
-                      notifyStateChanged(); // state를 변경했음을 알림
-                      // 그룹 변경 완료 후 현재 BottomSheet(다이얼로그)를 닫고 이전 화면으로 복귀
-                      Navigator.pop(context);
-                    },
-                  ),
-                ),
-                SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style:
-                        ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white54, // 버튼의 배경색을 변경
-                          padding: EdgeInsets.symmetric(vertical: 10),
-                        ).copyWith(
-                          foregroundColor: WidgetStateProperty.all<Color>(
-                            Colors.black87,
-                          ), // 버튼의 텍스트 및 아이콘 색상을 변경
-                        ),
-                    child: appWithIcon.isFixedApp == '1'
-                        ? Text("앱 풀기", style: TextStyle(fontSize: 18))
-                        : Text("앱 고정", style: TextStyle(fontSize: 18)),
-                    onPressed: () async {
-                      fixingApp(appWithIcon);
-                      notifyStateChanged(); // state를 변경했음을 알림
-                      // 앱 고정/풀기 완료 후 현재 BottomSheet(다이얼로그)를 닫고 이전 화면으로 복귀
-                      Navigator.pop(context);
-                    },
-                  ),
-                ),
-                SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style:
-                        ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white60, // 버튼의 배경색을 변경
-                          padding: EdgeInsets.symmetric(vertical: 10),
-                        ).copyWith(
-                          foregroundColor: WidgetStateProperty.all<Color>(
-                            Colors.black87,
-                          ), // 버튼의 텍스트 및 아이콘 색상을 변경
-                        ),
-                    child: Text("앱 삭제", style: TextStyle(fontSize: 18)),
-                    onPressed: () async {
-                      deleteApp(appWithIcon);
-                      notifyStateChanged(); // state를 변경했음을 알림
-                      // 앱 삭제 완료 후 현재 BottomSheet(다이얼로그)를 닫고 이전 화면으로 복귀
-                      Navigator.pop(context);
-                    },
-                  ),
-                ),
-                SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    icon: Icon(Icons.vpn_key, size: 22),
-                    label: Text(
-                      "로그인 정보",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
                       ),
+                      onPressed: () async {
+                        if (!context.mounted) return;
+                        Navigator.of(context).pop(); // 변경사항 다이얼로그 닫기
+                        await CommonHelper.showAddEditLoginInfoDialog(
+                          context,
+                          packageName: appWithIcon.packageName,
+                          appWebName: appWithIcon.appName,
+                        );
+                      },
                     ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue.shade50,
-                      foregroundColor: Colors.indigo.shade800,
-                      padding: EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
+                  ),
+                  SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style:
+                          ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white70, // 버튼의 배경색을 변경
+                            padding: EdgeInsets.symmetric(vertical: 10),
+                          ).copyWith(
+                            foregroundColor: WidgetStateProperty.all<Color>(
+                              Colors.black87,
+                            ), // 버튼의 텍스트 및 아이콘 색상을 변경
+                          ),
+                      child: Text("닫기", style: TextStyle(fontSize: 18)),
+                      onPressed: () async {
+                        // 아무 작업 없이 현재 BottomSheet(다이얼로그)를 닫고 이전 화면으로 복귀
+                        Navigator.pop(context);
+                      },
                     ),
-                    onPressed: () async {
-                      if (!context.mounted) return;
-                      Navigator.of(context).pop(); // 변경사항 다이얼로그 닫기
-                      await showLoginInfoDialogForWeb(
-                        context,
-                        packageName: appWithIcon.packageName,
-                        appWebName: appWithIcon.appName,
-                      );
-                    },
                   ),
-                ),
-                SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style:
-                        ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white70, // 버튼의 배경색을 변경
-                          padding: EdgeInsets.symmetric(vertical: 10),
-                        ).copyWith(
-                          foregroundColor: WidgetStateProperty.all<Color>(
-                            Colors.black87,
-                          ), // 버튼의 텍스트 및 아이콘 색상을 변경
-                        ),
-                    child: Text("닫기", style: TextStyle(fontSize: 18)),
-                    onPressed: () async {
-                      // 아무 작업 없이 현재 BottomSheet(다이얼로그)를 닫고 이전 화면으로 복귀
-                      Navigator.pop(context);
-                    },
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
           );
         },
       ),
@@ -563,69 +560,26 @@ class CommonHelper {
     notifyStateChanged(); // state를 변경했음을 알림
   }
 
-  /// 웹 사이트별 로그인 정보(아이디/비밀번호 등) 관리 다이얼로그를 표시.
-  Future<void> showLoginInfoDialogForWeb(
+  /// 로그인 정보 추가/수정 다이얼로그 표시 (공통).
+  static Future<void> showAddEditLoginInfoDialog(
     BuildContext context, {
     required String packageName,
     required String appWebName,
+    Map<String, dynamic>? item,
+    VoidCallback? onSaved,
   }) async {
-    if (!context.mounted) return;
-    await showDialog<void>(
-      context: context,
-      builder: (ctx) => _LoginInfoDialog(
-        webUrl: packageName,
-        appWebName: appWebName,
-      ),
-    );
-  }
-}
-
-/// 로그인 정보(아이디/비밀번호/메모) 저장·조회 다이얼로그.
-class _LoginInfoDialog extends StatefulWidget {
-  const _LoginInfoDialog({
-    required this.webUrl,
-    required this.appWebName,
-  });
-
-  final String webUrl;
-  final String appWebName;
-
-  @override
-  State<_LoginInfoDialog> createState() => _LoginInfoDialogState();
-}
-
-class _LoginInfoDialogState extends State<_LoginInfoDialog> {
-  List<Map<String, dynamic>> _items = [];
-  bool _loading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadItems();
-  }
-
-  Future<void> _loadItems() async {
-    setState(() => _loading = true);
-    final list =
-        await SQLHelper.getAppWebLoginInfos(widget.webUrl);
-    if (mounted) {
-      setState(() {
-        _items = list;
-        _loading = false;
-      });
-    }
-  }
-
-  Future<void> _showAddEditDialog({Map<String, dynamic>? item}) async {
     final isEdit = item != null;
-    final usernameController =
-        TextEditingController(text: item?['username']?.toString() ?? '');
-    final passwordController =
-        TextEditingController(text: item?['password']?.toString() ?? '');
-    final memoController =
-        TextEditingController(text: item?['memo']?.toString() ?? '');
+    final usernameController = TextEditingController(
+      text: item?['username']?.toString() ?? '',
+    );
+    final passwordController = TextEditingController(
+      text: item?['password']?.toString() ?? '',
+    );
+    final memoController = TextEditingController(
+      text: item?['memo']?.toString() ?? '',
+    );
 
-    if (!mounted) return;
+    if (!context.mounted) return;
     await showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -680,20 +634,78 @@ class _LoginInfoDialogState extends State<_LoginInfoDialog> {
               final password = passwordController.text.trim();
               final memo = memoController.text.trim();
               await SQLHelper.saveAppWebLoginInfo(
-                id: isEdit ? item['id'] as int? : null,
-                webUrl: widget.webUrl,
-                appWebName: widget.appWebName,
+                id: isEdit ? item!['id'] as int? : null,
+                webUrl: packageName,
+                appWebName: appWebName,
                 username: username.isEmpty ? null : username,
                 password: password.isEmpty ? null : password,
                 memo: memo.isEmpty ? null : memo,
               );
               if (ctx.mounted) Navigator.of(ctx).pop();
-              _loadItems();
+              onSaved?.call();
             },
             child: Text('저장'),
           ),
         ],
       ),
+    );
+  }
+
+  /// 웹 사이트별 로그인 정보(아이디/비밀번호 등) 관리 다이얼로그를 표시.
+  Future<void> showLoginInfoDialogForWeb(
+    BuildContext context, {
+    required String packageName,
+    required String appWebName,
+  }) async {
+    if (!context.mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) =>
+          _LoginInfoDialog(webUrl: packageName, appWebName: appWebName),
+    );
+  }
+}
+
+/// 로그인 정보(아이디/비밀번호/메모) 저장·조회 다이얼로그.
+class _LoginInfoDialog extends StatefulWidget {
+  const _LoginInfoDialog({required this.webUrl, required this.appWebName});
+
+  final String webUrl;
+  final String appWebName;
+
+  @override
+  State<_LoginInfoDialog> createState() => _LoginInfoDialogState();
+}
+
+class _LoginInfoDialogState extends State<_LoginInfoDialog> {
+  List<Map<String, dynamic>> _items = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadItems();
+  }
+
+  Future<void> _loadItems() async {
+    setState(() => _loading = true);
+    final list = await SQLHelper.getAppWebLoginInfos(widget.webUrl);
+    if (mounted) {
+      setState(() {
+        _items = list;
+        _loading = false;
+      });
+    }
+  }
+
+  Future<void> _showAddEditDialog({Map<String, dynamic>? item}) async {
+    if (!mounted) return;
+    await CommonHelper.showAddEditLoginInfoDialog(
+      context,
+      packageName: widget.webUrl,
+      appWebName: widget.appWebName,
+      item: item,
+      onSaved: _loadItems,
     );
   }
 
@@ -703,9 +715,7 @@ class _LoginInfoDialogState extends State<_LoginInfoDialog> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text('삭제 확인'),
-        content: Text(
-          '아이디 "$username" 로그인 정보를 삭제할까요?',
-        ),
+        content: Text('아이디 "$username" 로그인 정보를 삭제할까요?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
@@ -760,8 +770,7 @@ class _LoginInfoDialogState extends State<_LoginInfoDialog> {
                   itemBuilder: (ctx, i) {
                     final it = _items[i];
                     final username = it['username']?.toString() ?? '(없음)';
-                    final hasPw =
-                        (it['password']?.toString() ?? '').isNotEmpty;
+                    final hasPw = (it['password']?.toString() ?? '').isNotEmpty;
                     return Card(
                       margin: EdgeInsets.only(bottom: 8),
                       child: ListTile(
@@ -769,8 +778,8 @@ class _LoginInfoDialogState extends State<_LoginInfoDialog> {
                         subtitle: hasPw
                             ? Text('비밀번호 ****')
                             : it['memo']?.toString().isNotEmpty == true
-                                ? Text(it['memo'] as String)
-                                : null,
+                            ? Text(it['memo'] as String)
+                            : null,
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [

@@ -109,14 +109,13 @@ class SQLHelper {
     sql.Database database,
   ) async {
     await database.execute("""CREATE TABLE IF NOT EXISTS tbl_app_web_info (
-      id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-      web_url            TEXT    NOT NULL ,
-      app_web_name       TEXT    NOT NULL ,
-      username           TEXT    NULL DEFAULT NULL ,
-      password           TEXT    NULL DEFAULT NULL ,
-      memo               TEXT    NULL DEFAULT NULL ,
-      createdAt          TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now', 'utc')),
-      updatedAt          TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now', 'utc'))
+      group_name         TEXT    NOT NULL PRIMARY KEY ,
+      group_order        TEXT    NOT NULL ,
+      app_order          TEXT    NOT NULL ,      
+      group_code         TEXT    NOT NULL ,
+      use_yn             TEXT    NOT NULL DEFAULT 'Y',      
+      use_period_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now', 'utc')),
+      createdAt          TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now', 'utc'))
     )
     """);
   }
