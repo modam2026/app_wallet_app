@@ -634,7 +634,6 @@ class CommonHelper {
                     border: OutlineInputBorder(),
                   ),
                   maxLines: 2,
-                  textInputAction: TextInputAction.done,
                 ),
               ],
             ),

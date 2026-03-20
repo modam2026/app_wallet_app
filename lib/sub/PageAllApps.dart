@@ -11,7 +11,7 @@ import 'package:flutter/material.dart';
 /// 작업 순서:
 ///   1. [initState]   - [groupCode] / [appOrder] 기준으로 [_appsFuture] 초기화
 ///   2. [_loadApps]   - appDataWithAll 이 비어있으면 로딩 후 groupCode·app_order 로 필터
-///   3. groupCode "A" → 전체 표시 / 그 외 → app_kind == groupCode AND app_order 매칭
+///   3. "전체"(A, appOrder 1) → 전체 표시 / 사용자 정의(A, appOrder>1) → 나의 앱 DB 필터 / 그 외 → app_kind+app_order 매칭
 ///   4. [build]       - FutureBuilder 로 ListView 렌더링, 각 앱에 나의 앱 추가/삭제 버튼
 ///   5. [didUpdateWidget] - groupCode·appOrder 변경 시 목록 갱신
 class PageAllApps extends StatefulWidget {
@@ -58,17 +58,43 @@ class _PageAllAppsState extends State<PageAllApps> {
   }
 
   /// appDataWithAll 에서 groupCode·app_order 기준으로 필터링 후 앱 목록 반환.
-  /// groupCode "A" → 전체 / 그 외 → app_kind + app_order 매칭 (은행·카드·증권 구분)
+  /// - "전체"(A, appOrder 1) → 전체 표시
+  /// - 사용자 정의 그룹(A, appOrder > 1) → 나의 앱 DB에서 해당 그룹 앱만 표시
+  /// - 기본 그룹(B, C, G 등) → app_kind + app_order 매칭
   Future<List<CachedApplication>> _loadApps() async {
     if (_helper.appDataWithAll.isEmpty) {
       _helper.appDataWithAll =
           await _helper.getCachedApplications('A', '');
     }
 
+    // 사용자 정의 그룹(groupCode A, appOrder > 1): 나의 앱 DB에서 해당 그룹 앱만 표시
+    final bool isUserDefinedGroup =
+        widget.groupCode == "A" && widget.appOrder > 1;
+
+    if (isUserDefinedGroup) {
+      final myApps = await SQLHelper.getMyAppsFromDB();
+      final packageNames = myApps
+          .where((m) =>
+              (m["app_kind"]?.toString() ?? "") == "A" &&
+              m["app_order"].toString() == widget.appOrder.toString())
+          .map((m) => m["package_name"] as String)
+          .toSet();
+
+      final result = <CachedApplication>[];
+      for (var item in _helper.appDataWithAll) {
+        final pkg = item["package_name"] as String?;
+        if (pkg != null && packageNames.contains(pkg)) {
+          result.add(item["cached_application"]);
+        }
+      }
+      return result;
+    }
+
+    // "전체"(A, appOrder 1) 또는 기본 그룹(B, C, G 등): appDataWithAll에서 필터
     final List<CachedApplication> result = [];
     for (var item in _helper.appDataWithAll) {
       final bool matched =
-          widget.groupCode == "A" ||
+          (widget.groupCode == "A" && widget.appOrder == 1) ||
           (item["app_kind"] == widget.groupCode &&
               item["app_order"].toString() == widget.appOrder.toString());
       if (matched) {

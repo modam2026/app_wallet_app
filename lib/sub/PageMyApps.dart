@@ -86,8 +86,9 @@ class _PageMyAppsState extends State<PageMyApps> {
 
     final List<CachedApplication> result = [];
     for (var myApp in _helper.appDataWithMine) {
+      // "전체"(groupCode=A, appOrder=1)만 전체 표시. 사용자 정의 그룹(A, appOrder>1)은 필터링
       final bool matched =
-          widget.groupCode == "A" ||
+          (widget.groupCode == "A" && widget.appOrder == 1) ||
           (myApp["app_order"].toString() == widget.appOrder.toString() &&
               myApp["app_kind"] == widget.groupCode);
       if (matched) {

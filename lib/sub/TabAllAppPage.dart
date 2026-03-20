@@ -108,8 +108,9 @@ class _TabAllAppPageState extends State<TabAllAppPage> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 40),
-                  Expanded(
+                  const Spacer(),
+                  SizedBox(
+                    width: 100,
                     child: Theme(
                       data: ThemeData(
                         canvasColor: Colors.blue[200],
@@ -117,7 +118,7 @@ class _TabAllAppPageState extends State<TabAllAppPage> {
                             const IconThemeData(color: Colors.white),
                       ),
                       child: DropdownButton<String>(
-                        isExpanded: true,
+                        isExpanded: false,
                         value: _dropdownValue,
                         icon: const Icon(Icons.arrow_downward),
                         onChanged: (String? newValue) {
@@ -145,6 +146,7 @@ class _TabAllAppPageState extends State<TabAllAppPage> {
                       ),
                     ),
                   ),
+                  const Spacer(),
                 ],
               ),
             ),
