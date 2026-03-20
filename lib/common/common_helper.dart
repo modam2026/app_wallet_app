@@ -1,5 +1,4 @@
-﻿import 'package:flutter/foundation.dart';
-import 'package:app_wallet_app/common/AppCache.dart';
+﻿import 'package:app_wallet_app/common/AppCache.dart';
 import 'package:app_wallet_app/common/sql_helper.dart';
 import 'package:device_apps/device_apps.dart';
 import 'package:flutter/material.dart';
@@ -419,7 +418,7 @@ class CommonHelper {
                               Colors.black87,
                             ), // 버튼의 텍스트 및 아이콘 색상을 변경
                           ),
-                      child: Text("?? ??", style: TextStyle(fontSize: 18)),
+                      child: Text("그룹 변경", style: TextStyle(fontSize: 18)),
                       onPressed: () async {
                         String strAppOrder = "";
                         String strAppKind = "";
@@ -457,7 +456,7 @@ class CommonHelper {
                     child: ElevatedButton(
                       style:
                           ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white54, // ????????? ???
+                            backgroundColor: Colors.white54, // 버튼의 배경색을 변경
                             padding: EdgeInsets.symmetric(vertical: 10),
                           ).copyWith(
                             foregroundColor: WidgetStateProperty.all<Color>(
@@ -488,7 +487,7 @@ class CommonHelper {
                               Colors.black87,
                             ), // 버튼의 텍스트 및 아이콘 색상을 변경
                           ),
-                      child: Text("? ??", style: TextStyle(fontSize: 18)),
+                      child: Text("앱 삭제", style: TextStyle(fontSize: 18)),
                       onPressed: () async {
                         deleteApp(appWithIcon);
                         notifyStateChanged(); // state를 변경했음을 알림
@@ -503,7 +502,7 @@ class CommonHelper {
                     child: ElevatedButton.icon(
                       icon: Icon(Icons.vpn_key, size: 22),
                       label: Text(
-                        "??? ??",
+                        "로그인 정보",
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
@@ -520,10 +519,15 @@ class CommonHelper {
                       onPressed: () async {
                         if (!context.mounted) return;
                         Navigator.of(context).pop(); // 변경사항 다이얼로그 닫기
+                        final items = await SQLHelper.getAppWebLoginInfos(
+                          appWithIcon.packageName,
+                        );
+                        if (!context.mounted) return;
                         await CommonHelper.showAddEditLoginInfoDialog(
                           context,
                           packageName: appWithIcon.packageName,
                           appWebName: appWithIcon.appName,
+                          item: items.isNotEmpty ? items.first : null,
                         );
                       },
                     ),

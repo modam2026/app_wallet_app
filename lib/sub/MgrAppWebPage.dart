@@ -37,13 +37,7 @@ class _MgrAppWebPageState extends State<MgrAppWebPage>
   late Timer _timer;
   bool _isGroupDrawer = false;
   late TabController _tabController;
-  List<GroupItem> _groupListForDrawer = const [
-    GroupItem('d', '매일'),
-    GroupItem('w', '매주'),
-    GroupItem('m', '매월'),
-    GroupItem('e', '가끔'),
-    GroupItem('g', '게임'),
-  ];
+  List<GroupItem> _groupListForDrawer = const [];
   List<GroupItem> _groupListForGroupManagement = const [];
   int _groupDrawerOpenKey = 0;
 
@@ -63,8 +57,7 @@ class _MgrAppWebPageState extends State<MgrAppWebPage>
 
   /// 그룹 관리 Drawer용 전체 그룹 목록 로드 (use_yn='N' 포함).
   Future<void> _loadGroupListForGroupManagement() async {
-    final groups =
-        await SQLHelper.getAllGroupListForManagement();
+    final groups = await SQLHelper.getAllGroupListForManagement();
     if (!mounted) return;
     final list = groups
         .map(
@@ -99,20 +92,20 @@ class _MgrAppWebPageState extends State<MgrAppWebPage>
     // group_code 는 makeIntrnAppListData 의 app_kind 값과 반드시 일치해야 함
     final hasGroups = await SQLHelper.hasMyGroups();
     if (!hasGroups) {
-      await SQLHelper.addGroupInfo(1,  "전체",       1,  "A");
-      await SQLHelper.addGroupInfo(2,  "구글앱",      1, "G"); // com.google.*
-      await SQLHelper.addGroupInfo(3,  "SNS",        1, "M"); // 인스타, 카카오톡 등
-      await SQLHelper.addGroupInfo(4,  "삼성일반앱",   1, "X"); // com.samsung.*
-      await SQLHelper.addGroupInfo(5,  "삼성시스템앱", 2, "X"); // com.sec.*
-      await SQLHelper.addGroupInfo(6,  "시스템", 1,  "S"); // com.android.*
-      await SQLHelper.addGroupInfo(7,  "기관",   1,  "I"); // kr.go.*
-      await SQLHelper.addGroupInfo(8,  "은행",   1,  "B"); // B01
-      await SQLHelper.addGroupInfo(9,  "카드",   2,  "B"); // B02
-      await SQLHelper.addGroupInfo(10, "증권",   3,  "B"); // B03
-      await SQLHelper.addGroupInfo(11, "KT",    1,   "C"); // C01
-      await SQLHelper.addGroupInfo(12, "SKT",   2,   "C"); // C02
-      await SQLHelper.addGroupInfo(13, "LGU+",  1,   "C"); // C03
-      await SQLHelper.addGroupInfo(14, "기타",   1,   "E");
+      await SQLHelper.addGroupInfo(1, "전체", 1, "A");
+      await SQLHelper.addGroupInfo(2, "구글앱", 1, "G"); // com.google.*
+      await SQLHelper.addGroupInfo(3, "SNS", 1, "M"); // 인스타, 카카오톡 등
+      await SQLHelper.addGroupInfo(4, "삼성일반앱", 1, "X"); // com.samsung.*
+      await SQLHelper.addGroupInfo(5, "삼성시스템앱", 2, "X"); // com.sec.*
+      await SQLHelper.addGroupInfo(6, "시스템", 1, "S"); // com.android.*
+      await SQLHelper.addGroupInfo(7, "기관", 1, "I"); // kr.go.*
+      await SQLHelper.addGroupInfo(8, "은행", 1, "B"); // B01
+      await SQLHelper.addGroupInfo(9, "카드", 2, "B"); // B02
+      await SQLHelper.addGroupInfo(10, "증권", 3, "B"); // B03
+      await SQLHelper.addGroupInfo(11, "KT", 1, "C"); // C01
+      await SQLHelper.addGroupInfo(12, "SKT", 2, "C"); // C02
+      await SQLHelper.addGroupInfo(13, "LGU+", 1, "C"); // C03
+      await SQLHelper.addGroupInfo(14, "기타", 1, "E");
     }
 
     // 그룹 삽입 완료 후 Drawer 그룹 목록 로드 (타이밍 문제 방지)
@@ -352,8 +345,6 @@ class _MgrAppWebPageState extends State<MgrAppWebPage>
     await commonHelper.initIntrnAppInfo();
 
     // 가져온 파일 목록을 화면에 업데이트
-    setState(() {
-      print("OK");
-    });
+    setState(() {});
   }
 }
