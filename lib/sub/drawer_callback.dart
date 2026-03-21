@@ -16,5 +16,12 @@ class GroupItem {
   final String codeName;
   final int order;
   final String? myAppYn;
-  const GroupItem(this.code, this.codeName, [this.order = 1, this.myAppYn]);
+  final String? useYn;
+  const GroupItem(
+    this.code,
+    this.codeName, [
+    this.order = 1,
+    this.myAppYn,
+    this.useYn,
+  ]);
 }

@@ -221,15 +221,15 @@ class _DrawerPageGrpState extends State<DrawerPageGrp> {
                                 child: Text(
                                   g.codeName,
                                   style: TextStyle(
-                                    color: g.code == 'A'
-                                        ? Colors.red
-                                        : g.myAppYn == 'Y'
-                                            ? Colors.blue
-                                            : null,
-                                    fontWeight:
-                                        (g.code == 'A' || g.myAppYn == 'Y')
-                                            ? FontWeight.w600
-                                            : null,
+                                    color: (g.useYn?.toUpperCase() ?? 'Y') ==
+                                            'N'
+                                        ? Colors.grey
+                                        : g.code == 'A'
+                                            ? Colors.red
+                                            : g.myAppYn == 'Y'
+                                                ? Colors.blue
+                                                : null,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ),

@@ -66,6 +66,7 @@ class _MgrAppWebPageState extends State<MgrAppWebPage>
             g['group_name'] as String? ?? '',
             int.tryParse(g['app_order']?.toString() ?? '1') ?? 1,
             g['my_app_yn']?.toString().toUpperCase(),
+            g['use_yn']?.toString().toUpperCase(),
           ),
         )
         .toList();
