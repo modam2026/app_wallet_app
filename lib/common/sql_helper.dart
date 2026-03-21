@@ -54,6 +54,7 @@ class SQLHelper {
       app_order          TEXT    NOT NULL ,      
       group_code         TEXT    NOT NULL ,
       use_yn             TEXT    NOT NULL DEFAULT 'Y',      
+      my_app_yn          TEXT    NOT NULL DEFAULT 'N',
       use_period_at      TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now', 'utc')),
       createdAt          TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now', 'utc'))
     )
@@ -72,9 +73,21 @@ class SQLHelper {
   static Future<sql.Database> appMngmntDB() async {
     return sql.openDatabase(
       'db_app_management.db',
-      version: 1,
+      version: 3,
       onCreate: (sql.Database database, int version) async {
         await createIntrnAppTables(database);
+      },
+      onUpgrade: (sql.Database db, int oldVersion, int newVersion) async {
+        if (oldVersion < 2) {
+          await db.execute(
+            "ALTER TABLE tbl_group_info ADD COLUMN my_app_yn TEXT",
+          );
+        }
+        if (oldVersion < 3) {
+          await db.execute(
+            "UPDATE tbl_group_info SET my_app_yn = 'N' WHERE my_app_yn IS NULL OR my_app_yn = ''",
+          );
+        }
       },
     );
   }
@@ -729,6 +742,41 @@ class SQLHelper {
     return result;
   }
 
+  /// tbl_group_info 에서 "나의 앱" 탭용 그룹만 조회.
+  /// 사용자 정의 그룹(group_code='A') 또는 my_app_yn='Y' 인 그룹만 반환.
+  static Future<List<Map<String, dynamic>>> getAllGroupListForMyApp() async {
+    final db = await SQLHelper.appMngmntDB();
+    const sql = '''
+      SELECT group_name, group_code, group_order, app_order
+        FROM tbl_group_info
+       WHERE TRIM(group_name) != ''
+         AND use_yn = 'Y'
+         AND (group_code = 'A' OR my_app_yn = 'Y')
+       ORDER BY
+         CASE
+           WHEN group_code = 'A' AND CAST(app_order AS INTEGER) = 1 THEN 0
+           WHEN group_code = 'A' AND CAST(app_order AS INTEGER) > 1 THEN 1
+           ELSE 2
+         END,
+         CASE
+           WHEN group_code = 'A' AND CAST(app_order AS INTEGER) > 1
+             THEN CAST(app_order AS INTEGER)
+           ELSE CAST(group_order AS INTEGER)
+         END
+    ''';
+    final rows = await db.rawQuery(sql);
+    return rows
+        .map<Map<String, dynamic>>(
+          (r) => {
+            'group_name': r['group_name'] as String? ?? '',
+            'group_code': r['group_code'] as String? ?? '',
+            'group_order': r['group_order'],
+            'app_order': r['app_order'],
+          },
+        )
+        .toList();
+  }
+
   /// tbl_group_info 에서 group_name, group_code, group_order, app_order 목록을 group_order 오름차순으로 조회.
   /// use_yn = 'Y' 인 활성 그룹만 반환.
   /// app_order: 앱 필터링 시 tbl_my_application_info.app_order 와 매칭에 사용
@@ -764,13 +812,22 @@ class SQLHelper {
         .toList();
   }
 
+  /// 그룹의 my_app_yn 을 지정된 값('Y' 또는 'N')으로 설정.
+  static Future<int> updateGroupMyAppYn(String pGroupName, String yn) async {
+    final db = await SQLHelper.appMngmntDB();
+    return db.rawUpdate(
+      "UPDATE tbl_group_info SET my_app_yn = ? WHERE group_name = ?",
+      [yn, pGroupName],
+    );
+  }
+
   /// tbl_group_info 에서 모든 그룹 조회 (use_yn 무관).
   /// 그룹 관리 Drawer에서 사용 안 함(use_yn='N') 그룹도 표시.
   static Future<List<Map<String, dynamic>>>
   getAllGroupListForManagement() async {
     final db = await SQLHelper.appMngmntDB();
     const sql = '''
-      SELECT group_name, group_code, group_order, app_order, use_yn
+      SELECT group_name, group_code, group_order, app_order, use_yn, my_app_yn
         FROM tbl_group_info
        WHERE TRIM(group_name) != ''
        ORDER BY
@@ -794,6 +851,7 @@ class SQLHelper {
             'group_order': r['group_order'],
             'app_order': r['app_order'],
             'use_yn': r['use_yn'] as String? ?? 'Y',
+            'my_app_yn': r['my_app_yn'] as String? ?? 'N',
           },
         )
         .toList();
@@ -1046,7 +1104,7 @@ class SQLHelper {
 
     final result = await db.rawQuery(
       '''
-      SELECT app_order, group_code, use_yn
+      SELECT app_order, group_code, use_yn, my_app_yn
         FROM tbl_group_info
        WHERE group_name = ?
        LIMIT 1

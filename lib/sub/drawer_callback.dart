@@ -9,10 +9,12 @@ typedef CustomDrawerCallback = void Function();
 ///   - [code]     : DB 에 저장되는 그룹 코드 (예: 'd', 'U11')
 ///   - [codeName] : 화면에 표시되는 그룹명 (예: '매일', '금융')
 ///   - [order]    : tbl_group_info.app_order (PageMyApps 앱 필터링 시 app_order 매칭용)
+///   - [myAppYn]  : 'Y' 이면 나의 앱 탭에 표시되는 그룹 (선택 팝업에서 빨간색)
 /// 그룹 선택용: 프로그램에서는 [code], UI에는 [codeName] 표시
 class GroupItem {
   final String code;
   final String codeName;
   final int order;
-  const GroupItem(this.code, this.codeName, [this.order = 1]);
+  final String? myAppYn;
+  const GroupItem(this.code, this.codeName, [this.order = 1, this.myAppYn]);
 }

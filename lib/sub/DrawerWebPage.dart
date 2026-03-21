@@ -280,8 +280,9 @@ class _DrawerWebPageState extends State<DrawerWebPage> {
                     ),
                     onPressed: () async {
                       String strCaptionCtrl = captionController.text.trim();
-                      String strWebUrlCtrl =
-                          _normalizeUrl(webUrlController.text);
+                      String strWebUrlCtrl = _normalizeUrl(
+                        webUrlController.text,
+                      );
                       String? strTagCtrl = "";
 
                       switch (strSeletedClass) {
@@ -302,9 +303,7 @@ class _DrawerWebPageState extends State<DrawerWebPage> {
                           break;
                       }
 
-                      final chkData = await SQLHelper.chkCaption(
-                        strWebUrlCtrl,
-                      );
+                      final chkData = await SQLHelper.chkCaption(strWebUrlCtrl);
                       if (!_urlPattern.hasMatch(strWebUrlCtrl)) {
                         dicService.showCheckUrl();
                       } else if (strCaptionCtrl.isEmpty) {
@@ -318,11 +317,9 @@ class _DrawerWebPageState extends State<DrawerWebPage> {
                         final idxHttps = strWebUrlCtrl.indexOf('https://');
                         final idxHttp = strWebUrlCtrl.indexOf('http://');
                         if (idxHttps >= 0) {
-                          strWebUrlCtrl =
-                              strWebUrlCtrl.substring(idxHttps + 8);
+                          strWebUrlCtrl = strWebUrlCtrl.substring(idxHttps + 8);
                         } else if (idxHttp >= 0) {
-                          strWebUrlCtrl =
-                              strWebUrlCtrl.substring(idxHttp + 7);
+                          strWebUrlCtrl = strWebUrlCtrl.substring(idxHttp + 7);
                         }
                         await SQLHelper.editWebInfo(
                           strWebUrlCtrl,

@@ -21,10 +21,8 @@ class TabAllAppPage extends StatefulWidget {
   /// MgrAppWebPage 에서 tbl_group_info 로드 완료 후 전달하는 그룹 목록
   final List<GroupItem> groups;
 
-  const TabAllAppPage({
-    Key? key,
-    this.groups = const [GroupItem('A', '전체')],
-  }) : super(key: key);
+  const TabAllAppPage({Key? key, this.groups = const [GroupItem('A', '전체')]})
+    : super(key: key);
 
   @override
   State<TabAllAppPage> createState() => _TabAllAppPageState();
@@ -114,35 +112,34 @@ class _TabAllAppPageState extends State<TabAllAppPage> {
                     child: Theme(
                       data: ThemeData(
                         canvasColor: Colors.blue[200],
-                        iconTheme:
-                            const IconThemeData(color: Colors.white),
+                        iconTheme: const IconThemeData(color: Colors.white),
                       ),
                       child: DropdownButton<String>(
                         isExpanded: false,
                         value: _dropdownValue,
                         icon: const Icon(Icons.arrow_downward),
                         onChanged: (String? newValue) {
-                        if (newValue == null) return;
-                        final idx = _groups.indexWhere(
-                          (g) => g.codeName == newValue,
-                        );
-                        if (idx < 0) return;
-                        setState(() {
-                          _dropdownValue = newValue;
-                          _pageController.jumpToPage(idx);
-                        });
-                      },
-                      items: _groups
-                          .map(
-                            (g) => DropdownMenuItem<String>(
-                              value: g.codeName,
-                              child: Text(
-                                g.codeName,
-                                style: TextStyle(color: Colors.blue[900]),
+                          if (newValue == null) return;
+                          final idx = _groups.indexWhere(
+                            (g) => g.codeName == newValue,
+                          );
+                          if (idx < 0) return;
+                          setState(() {
+                            _dropdownValue = newValue;
+                            _pageController.jumpToPage(idx);
+                          });
+                        },
+                        items: _groups
+                            .map(
+                              (g) => DropdownMenuItem<String>(
+                                value: g.codeName,
+                                child: Text(
+                                  g.codeName,
+                                  style: TextStyle(color: Colors.blue[900]),
+                                ),
                               ),
-                            ),
-                          )
-                          .toList(),
+                            )
+                            .toList(),
                       ),
                     ),
                   ),

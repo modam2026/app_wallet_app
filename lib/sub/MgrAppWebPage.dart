@@ -65,6 +65,7 @@ class _MgrAppWebPageState extends State<MgrAppWebPage>
             g['group_code'] as String? ?? '',
             g['group_name'] as String? ?? '',
             int.tryParse(g['app_order']?.toString() ?? '1') ?? 1,
+            g['my_app_yn']?.toString().toUpperCase(),
           ),
         )
         .toList();
@@ -138,8 +139,10 @@ class _MgrAppWebPageState extends State<MgrAppWebPage>
   Future<void> _loadGroupNamesForTab(int tabIndex) async {
     List<GroupItem> list;
     if (tabIndex == 0 || tabIndex == 1) {
-      // tbl_group_info 에서 group_name, group_code 조회
-      final groups = await SQLHelper.getAllGroupList();
+      // 나의 앱 탭: 사용자 정의 그룹 + my_app_yn='Y' / 전체 앱 탭: 전체 그룹
+      final groups = tabIndex == 0
+          ? await SQLHelper.getAllGroupListForMyApp()
+          : await SQLHelper.getAllGroupList();
       list = groups.isEmpty
           ? [const GroupItem('', '그룹 없음')]
           : groups
