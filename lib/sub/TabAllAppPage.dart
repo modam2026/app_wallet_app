@@ -34,10 +34,15 @@ class _TabAllAppPageState extends State<TabAllAppPage> {
   final PageController _pageController = PageController(initialPage: 0);
   List<Widget> _pages = [];
 
+  /// 사용자 정의 그룹(code=='A', order>1) 제외. "전체"와 기본 그룹만 드롭다운에 표시
+  List<GroupItem> get _filteredGroups => widget.groups
+      .where((g) => g.code != 'A' || g.order == 1)
+      .toList();
+
   @override
   void initState() {
     super.initState();
-    _groups = widget.groups;
+    _groups = _filteredGroups.isNotEmpty ? _filteredGroups : widget.groups;
     _dropdownValue = _groups.first.codeName;
     _buildPages();
   }
@@ -64,7 +69,7 @@ class _TabAllAppPageState extends State<TabAllAppPage> {
     final newCodes = widget.groups.map((g) => g.code).toList();
     if (!listEquals(oldCodes, newCodes) && widget.groups.isNotEmpty) {
       setState(() {
-        _groups = widget.groups;
+        _groups = _filteredGroups.isNotEmpty ? _filteredGroups : widget.groups;
         _buildPages();
         if (!_groups.any((g) => g.codeName == _dropdownValue)) {
           _dropdownValue = _groups.first.codeName;
