@@ -41,6 +41,8 @@ class _PageMyAppsState extends State<PageMyApps> {
   List<CachedApplication> _searchApps = [];
   final CommonHelper _helper = CommonHelper.instance;
   late Future<List<CachedApplication>> _appsFuture;
+  bool _showGroupName = false;
+  final Map<String, String> _appGroupNames = {};
 
   /// 동시 _initAppData 호출 방지. 여러 PageMyApps 가 동시에 빌드되면
   /// appDataWithMine 이 비어있는 상태에서 중복 초기화가 발생함.
@@ -84,9 +86,16 @@ class _PageMyAppsState extends State<PageMyApps> {
       await _initAppData();
     }
 
+    final groups = await SQLHelper.getAllGroupList();
+    final groupMap = <String, String>{};
+    for (var g in groups) {
+      final key = '${g['group_code']}_${g['app_order']}';
+      groupMap[key] = g['group_name']?.toString() ?? '';
+    }
+
+    _appGroupNames.clear();
     final List<CachedApplication> result = [];
     for (var myApp in _helper.appDataWithMine) {
-      // "전체"(groupCode=A, appOrder=1)만 전체 표시. 사용자 정의 그룹(A, appOrder>1)은 필터링
       final bool matched =
           (widget.groupCode == "A" && widget.appOrder == 1) ||
           (myApp["app_order"].toString() == widget.appOrder.toString() &&
@@ -98,6 +107,8 @@ class _PageMyAppsState extends State<PageMyApps> {
         app.appUsePeriod = myApp['app_use_period'].toString();
         app.isFixedApp = myApp['is_fixed_app'].toString();
         result.add(app);
+        final key = '${myApp["app_kind"]}_${myApp["app_order"]}';
+        _appGroupNames[app.packageName] = groupMap[key] ?? '';
       }
     }
     return result;
@@ -140,7 +151,10 @@ class _PageMyAppsState extends State<PageMyApps> {
           .toList();
       if (matched.isEmpty) continue;
 
-      final Map<String, dynamic> rsltApp = matched[0];
+      // appDataWithAll 원본은 유지. 복사본에 사용자 그룹 정보만 반영 (이중 관리)
+      final Map<String, dynamic> rsltApp = Map<String, dynamic>.from(
+        matched[0],
+      );
       rsltApp["app_num"] = item["app_num"];
       rsltApp["app_order"] = item["app_order"];
       rsltApp["app_kind"] = item["app_kind"];
@@ -167,16 +181,50 @@ class _PageMyAppsState extends State<PageMyApps> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.groupName),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.folder_special, size: 22, color: Colors.amber[700]),
+            const SizedBox(width: 8),
+            Text(
+              widget.groupName,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
         actions: widget.groupCode == "A"
             ? [
-                IconButton(
-                  icon: const Icon(Icons.search),
-                  padding: const EdgeInsets.fromLTRB(0, 0, 26, 0),
-                  onPressed: () => showSearch(
-                    context: context,
-                    delegate: DataSearch(_searchApps),
-                  ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: Checkbox(
+                        value: _showGroupName,
+                        onChanged: (v) =>
+                            setState(() => _showGroupName = v ?? false),
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () =>
+                          setState(() => _showGroupName = !_showGroupName),
+                      child: Text(
+                        '그룹보기',
+                        style: TextStyle(fontSize: 14, color: Colors.black),
+                      ),
+                    ),
+                    const SizedBox(width: 24),
+                    IconButton(
+                      icon: const Icon(Icons.search),
+                      padding: const EdgeInsets.fromLTRB(0, 0, 26, 0),
+                      onPressed: () => showSearch(
+                        context: context,
+                        delegate: DataSearch(_searchApps),
+                      ),
+                    ),
+                  ],
                 ),
               ]
             : null,
@@ -217,6 +265,12 @@ class _PageMyAppsState extends State<PageMyApps> {
                     : null,
                 leading: Image(image: icon, width: 50, height: 50),
                 title: Text(app.appName),
+                subtitle: _showGroupName
+                    ? Text(
+                        _appGroupNames[app.packageName] ?? '',
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      )
+                    : null,
                 trailing: IconButton(
                   icon: const Icon(CupertinoIcons.ellipsis_vertical),
                   onPressed: () => _showDialog(app),

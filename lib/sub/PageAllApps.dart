@@ -39,6 +39,8 @@ class _PageAllAppsState extends State<PageAllApps> {
   List<CachedApplication> _searchApps = [];
   final CommonHelper _helper = CommonHelper.instance;
   late Future<List<CachedApplication>> _appsFuture;
+  bool _showGroupName = false;
+  final Map<String, String> _appGroupNames = {};
 
   @override
   void initState() {
@@ -67,6 +69,15 @@ class _PageAllAppsState extends State<PageAllApps> {
           await _helper.getCachedApplications('A', '');
     }
 
+    final groups = await SQLHelper.getAllGroupList();
+    final groupMap = <String, String>{};
+    for (var g in groups) {
+      final key = '${g['group_code']}_${g['app_order']}';
+      groupMap[key] = g['group_name']?.toString() ?? '';
+    }
+
+    _appGroupNames.clear();
+
     // 사용자 정의 그룹(groupCode A, appOrder > 1): 나의 앱 DB에서 해당 그룹 앱만 표시
     final bool isUserDefinedGroup =
         widget.groupCode == "A" && widget.appOrder > 1;
@@ -85,6 +96,7 @@ class _PageAllAppsState extends State<PageAllApps> {
         final pkg = item["package_name"] as String?;
         if (pkg != null && packageNames.contains(pkg)) {
           result.add(item["cached_application"]);
+          _appGroupNames[pkg] = widget.groupName;
         }
       }
       return result;
@@ -98,7 +110,15 @@ class _PageAllAppsState extends State<PageAllApps> {
           (item["app_kind"] == widget.groupCode &&
               item["app_order"].toString() == widget.appOrder.toString());
       if (matched) {
-        result.add(item["cached_application"]);
+        final app = item["cached_application"];
+        final pkg = item["package_name"] as String?;
+        result.add(app);
+        if (pkg != null) {
+          final key =
+              '${item["app_kind"]}_${item["app_order"]}';
+          _appGroupNames[pkg] =
+              groupMap[key] ?? widget.groupName;
+        }
       }
     }
     return result;
@@ -108,16 +128,51 @@ class _PageAllAppsState extends State<PageAllApps> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.groupName),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.folder_special, size: 22, color: Colors.amber[700]),
+            const SizedBox(width: 8),
+            Text(
+              widget.groupName,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
         actions: widget.groupCode == "A"
             ? [
-                IconButton(
-                  icon: const Icon(Icons.search),
-                  padding: const EdgeInsets.fromLTRB(0, 0, 26, 0),
-                  onPressed: () => showSearch(
-                    context: context,
-                    delegate: DataSearch(_searchApps),
-                  ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: Checkbox(
+                        value: _showGroupName,
+                        onChanged: (v) =>
+                            setState(() => _showGroupName = v ?? false),
+                        materialTapTargetSize:
+                            MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () =>
+                          setState(() => _showGroupName = !_showGroupName),
+                      child: Text(
+                        '그룹보기',
+                        style: TextStyle(fontSize: 14, color: Colors.black),
+                      ),
+                    ),
+                    const SizedBox(width: 24),
+                    IconButton(
+                      icon: const Icon(Icons.search),
+                      padding: const EdgeInsets.fromLTRB(0, 0, 26, 0),
+                      onPressed: () => showSearch(
+                        context: context,
+                        delegate: DataSearch(_searchApps),
+                      ),
+                    ),
+                  ],
                 ),
               ]
             : null,
@@ -193,7 +248,15 @@ class _PageAllAppsState extends State<PageAllApps> {
                       height: 50,
                     ),
                     title: Text(app.appName),
-                    subtitle: Text(app.packageName),
+                    subtitle: _showGroupName
+                        ? Text(
+                            _appGroupNames[app.packageName] ?? '',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          )
+                        : null,
                     trailing: IconButton(
                       icon: Icon(
                         isInDb
